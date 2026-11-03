@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nation's Finest - ANS Facility Operations Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      .print-target, .print-target * {
+        visibility: visible !important;
+      }
+      .print-target {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        box-shadow: none !important;
+        border: none !important;
+        display: block !important;
+        z-index: 999999 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+    .cir-table th, .cir-table td {
+      border: 1px solid #1f2937;
+      padding: 4px 6px;
+      font-size: 0.78rem;
+    }
+    .scrollbar-thin::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- TOP HEADER -->
+  <header class="bg-slate-900 text-white border-b-4 border-amber-500 shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-11 h-11 bg-amber-500 rounded flex items-center justify-center font-black text-slate-950 text-xl tracking-tighter shadow">NF</div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg md:text-xl font-bold tracking-tight text-white">NATION'S FINEST</h1>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">ANS Portal</span>
+          </div>
+          <div class="flex items-center gap-1.5 text-xs text-slate-300 mt-0.5">
+            <i class="fa-solid fa-location-dot text-amber-400 text-[11px]"></i>
+            <span id="header-facility-name" class="font-semibold text-white">Southgate Facility</span>
+            <span class="text-slate-500">•</span>
+            <span id="header-facility-address" class="text-slate-400 hidden sm:inline">7270 East Southgate Dr, Sacramento, CA 95823</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Facility Switcher & Live Controls -->
+      <div class="flex flex-wrap items-center gap-2.5 text-xs">
+        <div class="bg-slate-800 border border-slate-700 rounded p-1 flex items-center gap-1.5">
+          <label for="location-selector" class="text-slate-400 font-medium pl-1"><i class="fa-solid fa-building-flag mr-1 text-amber-400"></i>Site:</label>
+          <select id="location-selector" onchange="changeFacilityLocation()" class="bg-slate-900 text-amber-300 font-semibold rounded px-2 py-1 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-400">
+            <option value="sacramento" selected>Sacramento - Southgate Facility</option>
+            <option value="mather">Mather - Mather Veterans Village</option>
+            <option value="santarosa">Santa Rosa - National HQ & Service Center</option>
+            <option value="reno">Reno - Plumb Lane Facility (NV)</option>
+            <option value="carsoncity">Carson City - Adams St Facility (NV)</option>
+            <option value="flagstaff">Flagstaff - Cedar Ave Facility (AZ)</option>
+            <option value="prescott">Prescott - Gurley St Facility (AZ)</option>
+            <option value="bullhead">Bullhead City - Hancock Rd Facility (AZ)</option>
+            <option value="menlopark">Menlo Park - Willow Rd Facility (CA)</option>
+            <option value="santacruz">Santa Cruz - Soquel Dr Facility (CA)</option>
+            <option value="monterey">Monterey - Bonifacio Plaza (CA)</option>
+            <option value="eureka">Eureka - 4th St / Bayview Heights (CA)</option>
+            <option value="redding">Redding - Hartnell Ave Facility (CA)</option>
+            <option value="chico">Chico - Wall St Facility (CA)</option>
+            <option value="vacaville">Vacaville - Merchant St Facility (CA)</option>
+            <option value="custom">+ Custom / Other Facility Location</option>
+          </select>
+        </div>
+
+        <span class="px-2.5 py-1.5 rounded bg-slate-800 border border-slate-700 text-slate-300 hidden md:flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Shift: 12 AM - 8 AM
+        </span>
+        <span id="current-live-time" class="px-2.5 py-1.5 rounded bg-slate-800 border border-slate-700 text-amber-300 font-mono font-medium"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVIGATION TABS -->
+  <div class="bg-white border-b border-slate-200 shadow-sm sticky top-[68px] z-30">
+    <div class="max-w-7xl mx-auto px-4 flex justify-between items-center">
+      <div class="flex space-x-1 md:space-x-4 overflow-x-auto text-sm font-medium py-1.5 scrollbar-thin">
+        <button onclick="switchTab('bed-board')" id="tab-bed-board" class="tab-btn px-3 py-2 text-blue-700 border-b-2 border-blue-600 font-semibold flex items-center gap-2 whitespace-nowrap">
+          <i class="fa-solid fa-bed"></i> Bed Management (<span id="nav-bed-count">20</span> Beds)
+        </button>
+        <button onclick="switchTab('med-log')" id="tab-med-log" class="tab-btn px-3 py-2 text-slate-600 hover:text-slate-900 border-b-2 border-transparent flex items-center gap-2 whitespace-nowrap">
+          <i class="fa-solid fa-pills text-emerald-600"></i> Med Logs
+        </button>
+        <button onclick="switchTab('cir-section')" id="tab-cir-section" class="tab-btn px-3 py-2 text-slate-600 hover:text-slate-900 border-b-2 border-transparent flex items-center gap-2 whitespace-nowrap">
+          <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Form 1.H.10 Critical Incident Report
+        </button>
+        <button onclick="switchTab('shift-report')" id="tab-shift-report" class="tab-btn px-3 py-2 text-slate-600 hover:text-slate-900 border-b-2 border-transparent flex items-center gap-2 whitespace-nowrap">
+          <i class="fa-solid fa-clipboard-check"></i> Shift Log & Handover
+        </button>
+        <button onclick="switchTab('export-center')" id="tab-export-center" class="tab-btn px-3 py-2 text-slate-600 hover:text-slate-900 border-b-2 border-transparent flex items-center gap-2 whitespace-nowrap text-purple-700">
+          <i class="fa-solid fa-file-export text-purple-600"></i> Export & Reports Hub
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+
+    <!-- ======================================================= -->
+    <!-- 1. BED MANAGEMENT SECTION                               -->
+    <!-- ======================================================= -->
+    <section id="view-bed-board" class="tab-view block space-y-5">
+      <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <h2 class="font-bold text-slate-900 text-base flex items-center gap-2">
+            <span>Facility Bed Capacity Configuration</span>
+            <span id="capacity-badge" class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">20 Beds Active</span>
+          </h2>
+          <p class="text-xs text-slate-500">Dynamically adjust the capacity from 1 up to 100 beds to match any Nation's Finest facility size.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 text-xs">
+          <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5">
+            <label for="capacity-input" class="font-bold text-slate-700">Set Capacity (1-100):</label>
+            <input type="number" id="capacity-input" min="1" max="100" value="20" class="w-16 border rounded p-1 text-center font-bold text-blue-700">
+            <button onclick="updateBedCapacityFromInput()" class="px-2.5 py-1 bg-blue-700 text-white rounded font-semibold hover:bg-blue-800">Apply</button>
+          </div>
+
+          <div class="flex items-center gap-1">
+            <span class="text-slate-400 font-medium mr-1">Presets:</span>
+            <button onclick="setBedCapacityPreset(20)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 border rounded font-semibold text-slate-700">20</button>
+            <button onclick="setBedCapacityPreset(42)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 border rounded font-semibold text-slate-700">42 (Southgate)</button>
+            <button onclick="setBedCapacityPreset(60)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 border rounded font-semibold text-slate-700">60</button>
+            <button onclick="setBedCapacityPreset(100)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 border rounded font-semibold text-slate-700">100 (Max)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-emerald-500">
+          <div class="text-xs uppercase text-slate-500 font-semibold">Total Configured Beds</div>
+          <div id="stat-total-beds" class="text-2xl font-bold text-slate-800">20</div>
+          <div id="stat-site-name" class="text-[11px] text-slate-400 truncate">Southgate Facility</div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
+          <div class="text-xs uppercase text-slate-500 font-semibold">Occupied Onsite</div>
+          <div id="stat-occupied" class="text-2xl font-bold text-blue-700">17</div>
+          <div class="text-[11px] text-slate-400">Veterans in Facility</div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-amber-500">
+          <div class="text-xs uppercase text-slate-500 font-semibold">Pass / Hospital</div>
+          <div id="stat-pass" class="text-2xl font-bold text-amber-600">2</div>
+          <div class="text-[11px] text-slate-400">Authorized Offsite</div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-slate-400">
+          <div class="text-xs uppercase text-slate-500 font-semibold">Vacant Intake Beds</div>
+          <div id="stat-vacant" class="text-2xl font-bold text-slate-700">1</div>
+          <div class="text-[11px] text-slate-400">Available for Intake</div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-4 bg-slate-50 border-b border-slate-200 flex flex-wrap justify-between items-center gap-3">
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm">Real-Time Facility Bed Board (<span id="grid-header-count">20</span> Beds)</h3>
+            <p class="text-xs text-slate-500">Click any bed's "Change Status" link to toggle Occupied, On Pass, Hospital, or Vacant.</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="openNightCountModal()" class="px-3 py-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-signature"></i> Certify 02:00 AM Count
+            </button>
+            <button onclick="exportSingleSection('bed-board')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-print"></i> Print Bed Sheet
+            </button>
+          </div>
+        </div>
+        <div id="bed-grid" class="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-[620px] overflow-y-auto scrollbar-thin"></div>
+      </div>
+    </section>
+
+    <!-- ======================================================= -->
+    <!-- 2. MED LOGS (MEDICATION MANAGEMENT & LOG GENERATOR)     -->
+    <!-- ======================================================= -->
+    <section id="view-med-log" class="tab-view hidden space-y-5">
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-5 space-y-5">
+        
+        <!-- Header & Action Controls -->
+        <div class="flex flex-wrap justify-between items-center gap-4 pb-4 border-b border-slate-200">
+          <div>
+            <h2 class="font-bold text-slate-900 text-base flex items-center gap-2">
+              <i class="fa-solid fa-notes-medical text-emerald-600"></i> Facility Med Logs & Regimen Administration Record
+            </h2>
+            <p class="text-xs text-slate-500">Manage client medication regimens, add new veterans by first & last name, and generate clinical med observation sheets.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="openAddClientModal()" class="px-3 py-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded text-xs font-semibold flex items-center gap-1 shadow-sm">
+              <i class="fa-solid fa-user-plus"></i> + Add Client
+            </button>
+            <button onclick="openMultiSelectMedModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold flex items-center gap-1 shadow-sm">
+              <i class="fa-solid fa-list-check"></i> Assign Meds to Client
+            </button>
+            <button onclick="openNewMedicationModal()" class="px-3 py-1.5 bg-purple-700 hover:bg-purple-800 text-white rounded text-xs font-semibold flex items-center gap-1 shadow-sm">
+              <i class="fa-solid fa-database"></i> + New Med into Database
+            </button>
+            <button onclick="generateAndPrintMedSheet()" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 rounded text-xs font-semibold flex items-center gap-1 shadow-sm">
+              <i class="fa-solid fa-file-medical"></i> Generate & Print Med Sheet
+            </button>
+          </div>
+        </div>
+
+        <!-- Client Selector & Facility Indicator -->
+        <div class="flex flex-wrap items-center gap-3 text-xs bg-slate-50 p-3 rounded-lg border border-slate-200">
+          <label for="mar-client-select" class="font-bold text-slate-700">Select Resident / Veteran:</label>
+          <select id="mar-client-select" onchange="renderClientMAR()" class="border border-slate-300 rounded px-3 py-1.5 text-xs font-semibold bg-white shadow-sm focus:ring-2 focus:ring-emerald-500">
+            <!-- populated dynamically -->
+          </select>
+          <span class="text-slate-400">|</span>
+          <span id="mar-active-facility" class="text-slate-600 font-medium"><i class="fa-solid fa-hotel mr-1 text-slate-400"></i>Site: Southgate Facility</span>
+        </div>
+
+        <div id="mar-client-summary" class="p-3 bg-emerald-50/50 border border-emerald-200 rounded text-xs grid grid-cols-2 md:grid-cols-4 gap-2">
+          <!-- populated dynamically -->
+        </div>
+
+        <!-- Active Client Regimen Table -->
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="font-bold text-xs uppercase text-slate-700 tracking-wider">Active Scheduled Med Regimen for Selected Veteran</h3>
+            <span class="text-[11px] text-slate-500 font-medium">Auto-populates administration time, dose, and digital staff initials</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left border border-slate-200">
+              <thead class="bg-slate-100 text-slate-700 font-semibold uppercase text-[11px]">
+                <tr>
+                  <th class="p-2 border">Medication & Strength</th>
+                  <th class="p-2 border">Dosing Instructions / Indications</th>
+                  <th class="p-2 border">Scheduled Hour</th>
+                  <th class="p-2 border">Tonight's Observation</th>
+                  <th class="p-2 border">Staff Initials</th>
+                  <th class="p-2 border text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="mar-regimen-tbody" class="divide-y divide-slate-200">
+                <!-- populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Formulary Database Browser -->
+        <div class="pt-3 border-t border-slate-200">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+              <i class="fa-solid fa-book-medical text-emerald-600"></i> Clinical Formulary Database (<span id="formulary-count">0</span> medications loaded from Clinical Guide)
+            </h3>
+            <span class="text-[11px] text-slate-500">All medications include standard dosing, mild side effects, and critical red-flag emergency protocols.</span>
+          </div>
+          <div id="formulary-preview-list" class="flex flex-wrap gap-1.5 text-[11px] max-h-24 overflow-y-auto scrollbar-thin p-2 bg-slate-50 rounded border border-slate-200">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================= -->
+    <!-- 3. FORM 1.H.10 CRITICAL INCIDENT REPORT                 -->
+    <!-- ======================================================= -->
+    <section id="view-cir-section" class="tab-view hidden space-y-6">
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-4 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex flex-wrap justify-between items-center gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-amber-500 rounded flex items-center justify-center font-black text-slate-950 text-2xl tracking-tighter shadow">NF</div>
+            <div>
+              <div class="text-xs uppercase tracking-widest text-amber-400 font-bold">Nation's Finest Policy Form 1.H.10</div>
+              <h2 class="text-xl font-black tracking-tight">CRITICAL INCIDENT REPORT INTAKE & GENERATOR</h2>
+              <p class="text-xs text-slate-300">Complete required fields below to route digitally and generate the official 1.H.10 printable report</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="loadSampleCIR()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-xs rounded font-medium text-amber-300">
+              <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Fill Sample Incident
+            </button>
+            <button type="button" onclick="generateAndPreviewCIR()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded shadow flex items-center gap-1.5">
+              <i class="fa-solid fa-file-pdf"></i> Generate Official Form 1.H.10
+            </button>
+          </div>
+        </div>
+
+        <form id="cir-master-form" class="p-6 space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Date of Incident *</label>
+              <input type="date" id="cir_date_incident" required class="w-full border border-slate-300 rounded p-2 bg-white font-medium">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Time of Incident *</label>
+              <input type="time" id="cir_time_incident" required class="w-full border border-slate-300 rounded p-2 bg-white font-medium">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Date of Discovery *</label>
+              <input type="date" id="cir_date_discovery" required class="w-full border border-slate-300 rounded p-2 bg-white font-medium">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Time of Discovery *</label>
+              <input type="time" id="cir_time_discovery" required class="w-full border border-slate-300 rounded p-2 bg-white font-medium">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block font-bold text-slate-700 mb-1">Person Reporting Incident (Staff Name) *</label>
+              <input type="text" id="cir_person_reporting" value="Marcellus Johnson" required class="w-full border border-slate-300 rounded p-2 bg-white font-medium">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block font-bold text-slate-700 mb-1">Person(s) Notified of Incident *</label>
+              <input type="text" id="cir_persons_notified" placeholder="e.g., Ronnie Riddle, Site Supervisor on call" required class="w-full border border-slate-300 rounded p-2 bg-white font-medium">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Site Reporting Incident</label>
+              <input type="text" id="cir_site_reporting" value="Southgate Facility" class="w-full border border-slate-300 rounded p-2 bg-white font-medium">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Program Reporting Incident</label>
+              <input type="text" id="cir_program_reporting" value="Transitional Supportive Housing / SITH" class="w-full border border-slate-300 rounded p-2 bg-white font-medium">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block font-bold text-slate-700 mb-1">Location of Incident *</label>
+              <input type="text" id="cir_location" placeholder="e.g., Facility Courtyard / Bed 14 / Front Lobby" required class="w-full border border-slate-300 rounded p-2 bg-white font-medium">
+            </div>
+          </div>
+
+          <!-- Section I -->
+          <div class="border border-slate-200 rounded-lg p-4 bg-white">
+            <h3 class="font-bold text-sm text-slate-900 border-b pb-2 mb-3 flex items-center justify-between">
+              <span>I. Type of Incident <span class="text-xs font-normal text-slate-500">(Check all that apply)</span></span>
+              <span class="text-xs text-amber-700 font-semibold"><i class="fa-solid fa-circle-info mr-1"></i> Form 1.H.10 Classifications</span>
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-xs">
+              <div class="space-y-1.5">
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Biohazardous Accident" class="rounded text-blue-600"> <span>Biohazardous Accident</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Elderly (age 60+)/Dependent Adult (18-60) Abuse or Neglect" class="rounded text-blue-600"> <span>Elderly (age 60+)/Dependent Adult (18-60) Abuse or Neglect</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Child Abuse or Neglect" class="rounded text-blue-600"> <span>Child Abuse or Neglect</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded text-red-700 font-semibold"><input type="checkbox" name="cir_type" value="Client Death" class="rounded text-red-600"> <span>Client Death</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="AWOL" class="rounded text-blue-600"> <span>AWOL</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Serious Behavioral Concerns/Psychotic Features" class="rounded text-blue-600"> <span>Serious Behavioral Concerns/Psychotic Features</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded text-red-700 font-semibold"><input type="checkbox" name="cir_type" value="Serious Medical Emergency (911 calls)" class="rounded text-red-600"> <span>Serious Medical Emergency (911 calls)</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Incidents Involving Injury" class="rounded text-blue-600"> <span>Incidents Involving Injury</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Hospitalization" class="rounded text-blue-600"> <span>Hospitalization</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Natural Disaster (Earthquake, Fire, Flood, etc.)" class="rounded text-blue-600"> <span>Natural Disaster (Earthquake, Fire, Flood, etc.)</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Power Outage" class="rounded text-blue-600"> <span>Power Outage</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Mold" class="rounded text-blue-600"> <span>Mold</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Infection Control (TB, Covid, lice, scabies, not cold/flu)" class="rounded text-blue-600"> <span>Infection Control (TB, Covid, lice, scabies, not cold/flu)</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded text-red-700 font-semibold"><input type="checkbox" name="cir_type" value="Suicidal Behaviors/Ideation (talk)" class="rounded text-red-600"> <span>Suicidal Behaviors/Ideation (talk)</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded text-red-700 font-semibold"><input type="checkbox" name="cir_type" value="Homicidal Behaviors/Ideation (talk)" class="rounded text-red-600"> <span>Homicidal Behaviors/Ideation (talk)</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded text-red-700 font-semibold"><input type="checkbox" name="cir_type" value="Overdose" class="rounded text-red-600"> <span>Overdose</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Falls" class="rounded text-blue-600"> <span>Falls</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Animal Control Issue/Dog Bite" class="rounded text-blue-600"> <span>Animal Control Issue/Dog Bite</span></label>
+                <div class="pt-1 flex items-center gap-2">
+                  <span class="font-medium">Other:</span>
+                  <input type="text" id="cir_type_other" placeholder="please describe other incident type" class="flex-1 border border-slate-300 rounded p-1 text-xs">
+                </div>
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Medication Errors (missing, stolen, etc.)" class="rounded text-blue-600"> <span>Medication Errors (missing, stolen, etc.)</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Physical Restraint" class="rounded text-blue-600"> <span>Physical Restraint</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Missing Persons (report filed with PD)" class="rounded text-blue-600"> <span>Missing Persons (report filed with PD)</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Use/Possession of Licit or Illicit Substances" class="rounded text-blue-600"> <span>Use/Possession of Licit or Illicit Substances</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded text-red-700 font-semibold"><input type="checkbox" name="cir_type" value="Use/Possession of Weapons" class="rounded text-red-600"> <span>Use/Possession of Weapons</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Vehicular Accidents" class="rounded text-blue-600"> <span>Vehicular Accidents</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded text-amber-700 font-semibold"><input type="checkbox" name="cir_type" value="Grave Disability (5150 hold)" class="rounded text-amber-600"> <span>Grave Disability (5150 hold)</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded text-red-700 font-semibold"><input type="checkbox" name="cir_type" value="Physical Violence, Aggression or Assault (to Veteran or Staff)" class="rounded text-red-600"> <span>Physical Violence, Aggression or Assault (to Veteran or Staff)</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded text-red-700 font-semibold"><input type="checkbox" name="cir_type" value="Sexual Assault or Sexual Harassment" class="rounded text-red-600"> <span>Sexual Assault or Sexual Harassment</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Welfare Check" class="rounded text-blue-600"> <span>Welfare Check</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Fire (Veteran involved)" class="rounded text-blue-600"> <span>Fire (Veteran involved)</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Pest Control" class="rounded text-blue-600"> <span>Pest Control</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Trespassing" class="rounded text-blue-600"> <span>Trespassing</span></label>
+                <label class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded"><input type="checkbox" name="cir_type" value="Theft" class="rounded text-blue-600"> <span>Theft</span></label>
+
+                <div class="mt-3 p-2.5 bg-amber-50 border border-amber-200 rounded">
+                  <div class="font-bold text-slate-800 mb-1.5">Which of the following were also notified, if any?</div>
+                  <div class="space-y-1">
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="notif_le" class="rounded text-amber-600"> <span>Notification of Law Enforcement</span></label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="notif_ems" class="rounded text-amber-600"> <span>Notification of Emergency Medical Personnel</span></label>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="notif_aps" class="rounded text-amber-600"> <span>Notification of APS or CPS</span></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Client / Staff Involved Table -->
+          <div class="border border-slate-200 rounded-lg p-4 bg-white">
+            <h3 class="font-bold text-sm text-slate-900 border-b pb-2 mb-3">Client / Staff Involved (Check category as applicable)</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-left border border-slate-200" id="cir-involved-table">
+                <thead class="bg-slate-100 font-semibold">
+                  <tr>
+                    <th class="p-2 border w-1/3">Client / Staff Full Name</th>
+                    <th class="p-2 border text-center">Client</th>
+                    <th class="p-2 border text-center">Family</th>
+                    <th class="p-2 border text-center">Employee</th>
+                    <th class="p-2 border text-center">Visitor</th>
+                    <th class="p-2 border text-center">Other</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                  <tr>
+                    <td class="p-1 border"><input type="text" id="inv_name_0" placeholder="Person #1 Name" class="w-full border rounded p-1"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_0" value="Client"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_0" value="Family"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_0" value="Employee"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_0" value="Visitor"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_0" value="Other"></td>
+                  </tr>
+                  <tr>
+                    <td class="p-1 border"><input type="text" id="inv_name_1" placeholder="Person #2 Name" class="w-full border rounded p-1"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_1" value="Client"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_1" value="Family"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_1" value="Employee"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_1" value="Visitor"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_1" value="Other"></td>
+                  </tr>
+                  <tr>
+                    <td class="p-1 border"><input type="text" id="inv_name_2" placeholder="Person #3 Name" class="w-full border rounded p-1"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_2" value="Client"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_2" value="Family"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_2" value="Employee"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_2" value="Visitor"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_2" value="Other"></td>
+                  </tr>
+                  <tr>
+                    <td class="p-1 border"><input type="text" id="inv_name_3" placeholder="Person #4 Name" class="w-full border rounded p-1"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_3" value="Client"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_3" value="Family"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_3" value="Employee"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_3" value="Visitor"></td>
+                    <td class="p-1 border text-center"><input type="radio" name="inv_role_3" value="Other"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Narratives -->
+          <div class="space-y-4">
+            <div>
+              <label class="block font-bold text-xs text-slate-800 mb-1">II. Information about person(s) involved:</label>
+              <textarea id="cir_sec_ii" rows="2" placeholder="Relevant background, condition, or client specific notes..." class="w-full border border-slate-300 rounded p-2 text-xs"></textarea>
+            </div>
+            <div>
+              <label class="block font-bold text-xs text-slate-800 mb-1">III. Description of Incident (Use Addendum sheet if necessary) *</label>
+              <textarea id="cir_sec_iii" rows="4" required placeholder="Factual chronological description of exactly what happened, observations, statements made..." class="w-full border border-slate-300 rounded p-2 text-xs"></textarea>
+            </div>
+            <div>
+              <label class="block font-bold text-xs text-slate-800 mb-1">IV. Description of Action Taken at Time of Incident *</label>
+              <textarea id="cir_sec_iv" rows="3" required placeholder="Immediate de-escalation, first aid rendered, emergency services contacted, staff support provided..." class="w-full border border-slate-300 rounded p-2 text-xs"></textarea>
+            </div>
+            <div>
+              <label class="block font-bold text-xs text-slate-800 mb-1">V. Follow Up Plans/Recommendations:</label>
+              <textarea id="cir_sec_v" rows="2" placeholder="Case management referral, clinical follow-up, room inspection, monitoring plan..." class="w-full border border-slate-300 rounded p-2 text-xs"></textarea>
+            </div>
+            <div>
+              <label class="block font-bold text-xs text-slate-800 mb-1">VI. List All Persons Present at Time of Incident:</label>
+              <input type="text" id="cir_sec_vi" placeholder="Staff names, residents, responding officers/paramedics badge numbers..." class="w-full border border-slate-300 rounded p-2 text-xs">
+            </div>
+          </div>
+
+          <!-- Signatures -->
+          <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-3">
+            <div class="font-bold text-slate-800 border-b pb-1">Signatures & Administrative Verification</div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Person Reporting (Digital Signature)</label>
+                <input type="text" id="cir_sig_staff" value="Marcellus Johnson" class="w-full border rounded p-1.5 font-semibold bg-white">
+                <span class="text-[10px] text-slate-400">Date auto-stamps on generation</span>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Site Director Review</label>
+                <input type="text" id="cir_sig_director" placeholder="Pending Review" readonly class="w-full border rounded p-1.5 bg-slate-100 text-slate-500">
+                <span class="text-[10px] text-slate-400">Routing Queue Approval</span>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Chief Operations Officer</label>
+                <input type="text" id="cir_sig_coo" placeholder="Pending Executive Sign-off" readonly class="w-full border rounded p-1.5 bg-slate-100 text-slate-500">
+                <span class="text-[10px] text-slate-400">Escalated Sign-off</span>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4 pt-2">
+              <span class="font-bold text-slate-800">MUI (Major Unusual Incident):</span>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="cir_mui" value="No" checked> <span>No</span></label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="cir_mui" value="Yes"> <span class="text-red-700 font-semibold">Yes</span></label>
+              <input type="text" id="cir_mui_comments" placeholder="MUI Comments if applicable" class="flex-1 border rounded p-1 text-xs">
+            </div>
+            <p class="text-[11px] text-amber-800 bg-amber-50 p-2 rounded border border-amber-200 font-medium">
+              <i class="fa-solid fa-clock mr-1"></i> Policy Requirement: Please submit completed Critical Incident Report with a Supervisor’s signature to the Administration Manager or designee within <strong>24 HOURS</strong> of the date of discovery.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap justify-between items-center gap-3 pt-2">
+            <span class="text-xs text-slate-500">Form will validate required fields and generate the official 1.H.10 layout</span>
+            <div class="flex gap-2">
+              <button type="button" onclick="saveCIRToRoster()" class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded text-xs font-semibold shadow flex items-center gap-1.5">
+                <i class="fa-solid fa-floppy-disk"></i> Save & Route to Supervisor
+              </button>
+              <button type="button" onclick="generateAndPreviewCIR()" class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs rounded shadow flex items-center gap-1.5">
+                <i class="fa-solid fa-file-invoice"></i> View Official Printable Form 1.H.10
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Past Logged Incidents -->
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+        <h3 class="font-bold text-sm text-slate-800 mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-slate-600"></i> Active Shift Incident Reports & Routing Status
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left border border-slate-200">
+            <thead class="bg-slate-100 font-semibold">
+              <tr>
+                <th class="p-2 border">Report ID</th>
+                <th class="p-2 border">Date / Time</th>
+                <th class="p-2 border">Location</th>
+                <th class="p-2 border">Primary Types</th>
+                <th class="p-2 border">Routing Status</th>
+                <th class="p-2 border text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="cir-roster-tbody" class="divide-y divide-slate-200"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================= -->
+    <!-- 4. SHIFT LOG & HANDOVER SECTION                         -->
+    <!-- ======================================================= -->
+    <section id="view-shift-report" class="tab-view hidden space-y-5">
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-5 space-y-4">
+        <div class="flex justify-between items-center border-b pb-3">
+          <div>
+            <h2 class="font-bold text-slate-900 text-base">Southgate Awake Night Staff (ANS) Shift Handover</h2>
+            <p class="text-xs text-slate-500">Overnight facility walkthrough verification, environmental checks, and relief staff communication</p>
+          </div>
+          <button onclick="exportSingleSection('shift-report')" class="px-3 py-1.5 bg-slate-800 text-white rounded text-xs font-semibold">
+            <i class="fa-solid fa-print mr-1"></i> Print Shift Handover
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="space-y-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Outgoing ANS Staff On Duty</label>
+              <input type="text" id="shift-staff-duty" value="Marcellus Johnson, Ronnie Riddle" class="w-full border rounded p-2 bg-slate-50">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Incoming Morning Relief Staff</label>
+              <input type="text" id="shift-staff-relief" placeholder="e.g., Elaine Ho" class="w-full border rounded p-2">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Hourly Safety Rounds Verification (01:00 AM - 07:00 AM)</label>
+              <div class="grid grid-cols-4 gap-2 pt-1">
+                <label class="flex items-center gap-1.5 p-1 bg-slate-50 rounded border"><input type="checkbox" checked> 01:00 AM</label>
+                <label class="flex items-center gap-1.5 p-1 bg-slate-50 rounded border"><input type="checkbox" checked> 02:00 AM</label>
+                <label class="flex items-center gap-1.5 p-1 bg-slate-50 rounded border"><input type="checkbox" checked> 03:00 AM</label>
+                <label class="flex items-center gap-1.5 p-1 bg-slate-50 rounded border"><input type="checkbox" checked> 04:00 AM</label>
+                <label class="flex items-center gap-1.5 p-1 bg-slate-50 rounded border"><input type="checkbox" checked> 05:00 AM</label>
+                <label class="flex items-center gap-1.5 p-1 bg-slate-50 rounded border"><input type="checkbox" checked> 06:00 AM</label>
+                <label class="flex items-center gap-1.5 p-1 bg-slate-50 rounded border"><input type="checkbox" checked> 07:00 AM</label>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Facility / Security Observations</label>
+              <textarea id="shift-observations" rows="3" class="w-full border rounded p-2 text-xs" placeholder="All perimeter gates locked; exterior lighting checked; facility quiet..."></textarea>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Morning Handover Instructions</label>
+              <textarea id="shift-handover-notes" rows="3" class="w-full border rounded p-2 text-xs" placeholder="Veterans with early medical transports; medication delivery pending..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================= -->
+    <!-- 5. EXPORT & REPORTS HUB                                 -->
+    <!-- ======================================================= -->
+    <section id="view-export-center" class="tab-view hidden space-y-6">
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 space-y-6">
+        <div>
+          <h2 class="font-black text-slate-900 text-lg flex items-center gap-2">
+            <i class="fa-solid fa-file-circle-check text-purple-600"></i> Nation's Finest Operations Export Hub
+          </h2>
+          <p class="text-xs text-slate-500">Export information by individual section or generate a single, complete master audit packet combining all 4 operational functions.</p>
+        </div>
+
+        <div>
+          <h3 class="font-bold text-xs uppercase tracking-wider text-slate-700 mb-3">1. Sectional Exports (Print or PDF by Department)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="border rounded-lg p-4 bg-slate-50 flex flex-col justify-between hover:border-blue-400">
+              <div>
+                <div class="text-blue-700 font-bold text-sm mb-1 flex items-center gap-2">
+                  <i class="fa-solid fa-bed"></i> Bed Count Sheet
+                </div>
+                <p class="text-xs text-slate-600">Complete bed census, occupancy counts, pass statuses, and 02:00 AM certification.</p>
+              </div>
+              <button onclick="exportSingleSection('bed-board')" class="mt-4 w-full py-2 bg-blue-700 hover:bg-blue-800 text-white rounded text-xs font-semibold flex items-center justify-center gap-1.5 shadow">
+                <i class="fa-solid fa-print"></i> Export Bed Sheet
+              </button>
+            </div>
+
+            <div class="border rounded-lg p-4 bg-slate-50 flex flex-col justify-between hover:border-emerald-400">
+              <div>
+                <div class="text-emerald-700 font-bold text-sm mb-1 flex items-center gap-2">
+                  <i class="fa-solid fa-pills"></i> Client Med Log Sheet
+                </div>
+                <p class="text-xs text-slate-600">Active client med administration log, dosage instructions, and emergency guidance.</p>
+              </div>
+              <button onclick="generateAndPrintMedSheet()" class="mt-4 w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold flex items-center justify-center gap-1.5 shadow">
+                <i class="fa-solid fa-print"></i> Export Med Sheet
+              </button>
+            </div>
+
+            <div class="border rounded-lg p-4 bg-slate-50 flex flex-col justify-between hover:border-amber-400">
+              <div>
+                <div class="text-amber-800 font-bold text-sm mb-1 flex items-center gap-2">
+                  <i class="fa-solid fa-triangle-exclamation"></i> Form 1.H.10 CIR
+                </div>
+                <p class="text-xs text-slate-600">Official incident report form with checkboxes, narrative, and supervisory signature chain.</p>
+              </div>
+              <button onclick="generateAndPreviewCIR()" class="mt-4 w-full py-2 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-semibold flex items-center justify-center gap-1.5 shadow">
+                <i class="fa-solid fa-print"></i> Export Form 1.H.10
+              </button>
+            </div>
+
+            <div class="border rounded-lg p-4 bg-slate-50 flex flex-col justify-between hover:border-slate-400">
+              <div>
+                <div class="text-slate-800 font-bold text-sm mb-1 flex items-center gap-2">
+                  <i class="fa-solid fa-clipboard-check"></i> Shift Handover Log
+                </div>
+                <p class="text-xs text-slate-600">Hourly security walkthrough checks (01:00 - 07:00), facility notes, and relief instructions.</p>
+              </div>
+              <button onclick="exportSingleSection('shift-report')" class="mt-4 w-full py-2 bg-slate-800 hover:bg-slate-900 text-white rounded text-xs font-semibold flex items-center justify-center gap-1.5 shadow">
+                <i class="fa-solid fa-print"></i> Export Shift Handover
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 bg-gradient-to-r from-purple-900 to-slate-900 text-white rounded-lg shadow-md flex flex-wrap justify-between items-center gap-4">
+          <div>
+            <div class="text-xs uppercase tracking-widest text-amber-400 font-bold">Comprehensive Daily Master Packet</div>
+            <h3 class="text-lg font-bold">Generate All-In-One Facility Shift Packet</h3>
+            <p class="text-xs text-slate-300 max-w-xl">Compiles the active Bed Board, certified headcount, Med Log observation ledger, open CIRs, and shift log into a unified multi-page audit report.</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="exportMasterOperationsPacket()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded shadow flex items-center gap-2">
+              <i class="fa-solid fa-file-invoice"></i> Generate Master Shift Packet
+            </button>
+            <button onclick="exportJSONBackup()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs rounded border border-slate-600 flex items-center gap-1.5">
+              <i class="fa-solid fa-download"></i> Download JSON Backup
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================= -->
+  <!-- MODAL: ADD CLIENT (FIRST & LAST NAME)                   -->
+  <!-- ======================================================= -->
+  <div id="modal-add-client" class="hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-5 space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-blue-600"></i> Add New Client / Resident
+        </h3>
+        <button onclick="closeAddClientModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">First Name *</label>
+            <input type="text" id="client-firstname" placeholder="e.g., Joseph" class="w-full border rounded p-2 font-medium">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Last Name *</label>
+            <input type="text" id="client-lastname" placeholder="e.g., Croissant" class="w-full border rounded p-2 font-medium">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Assigned Bed</label>
+            <input type="text" id="client-bed" placeholder="e.g., Bed 07" class="w-full border rounded p-2 font-medium">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Intake Date</label>
+            <input type="date" id="client-intake" class="w-full border rounded p-2 font-medium">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Documented Allergies</label>
+          <input type="text" id="client-allergies" placeholder="e.g., Penicillin, Aspirin (or NKDA)" value="NKDA" class="w-full border rounded p-2 font-medium">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Prescribing Doctor / Clinic</label>
+          <input type="text" id="client-doctor" placeholder="e.g., VA Sacramento / Dr. Soriano" class="w-full border rounded p-2 font-medium">
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button onclick="closeAddClientModal()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-semibold">Cancel</button>
+        <button onclick="saveNewClient()" class="px-4 py-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded text-xs font-semibold">Save Client</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- MODAL: MULTI-SELECT MEDICATIONS ASSIGNMENT              -->
+  <!-- ======================================================= -->
+  <div id="modal-multiselect-med" class="hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-5 space-y-4 max-h-[90vh] flex flex-col">
+      <div class="flex justify-between items-center border-b pb-2">
+        <div>
+          <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-emerald-600"></i> Assign Medications to Veteran (Multi-Select)
+          </h3>
+          <p class="text-[11px] text-slate-500">Select one or more medications from the clinical guide formulary to add to the active client.</p>
+        </div>
+        <button onclick="closeMultiSelectModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">&times;</button>
+      </div>
+
+      <!-- Search bar -->
+      <div class="relative text-xs">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+        <input type="text" id="med-search-input" onkeyup="filterMultiSelectMeds()" placeholder="Filter medications by name or drug class..." class="w-full border rounded pl-8 pr-3 py-2">
+      </div>
+
+      <!-- Multi-select scroll area -->
+      <div id="multiselect-checkbox-container" class="flex-1 overflow-y-auto border rounded p-3 space-y-1.5 max-h-64 scrollbar-thin text-xs">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Common Dosing defaults -->
+      <div class="grid grid-cols-2 gap-2 text-xs pt-1 border-t">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Default Schedule Window</label>
+          <select id="multi-default-time" class="w-full border rounded p-1.5 bg-white">
+            <option value="08:00 (Morning)">08:00 (Morning)</option>
+            <option value="12:00 (Noon)">12:00 (Noon)</option>
+            <option value="18:00 (Evening)">18:00 (Evening)</option>
+            <option value="20:00 (Evening)" selected>20:00 (Evening)</option>
+            <option value="22:00 (Bedtime)">22:00 (Bedtime)</option>
+            <option value="PRN (As Needed)">PRN (As Needed)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Dosing / Instructions Note</label>
+          <input type="text" id="multi-default-note" placeholder="e.g., 1 Tab Daily with water" class="w-full border rounded p-1.5">
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center pt-2 border-t text-xs">
+        <span id="selected-meds-counter" class="font-bold text-emerald-700">0 medications selected</span>
+        <div class="flex gap-2">
+          <button onclick="closeMultiSelectModal()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-semibold">Cancel</button>
+          <button onclick="confirmMultiSelectMeds()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-semibold shadow">Add Selected Meds to Client</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- MODAL: REGISTER CUSTOM MEDICATION INTO DATABASE         -->
+  <!-- ======================================================= -->
+  <div id="modal-new-medication" class="hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-5 space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-database text-purple-600"></i> Register New Medication into Database
+        </h3>
+        <button onclick="closeNewMedModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">&times;</button>
+      </div>
+      <p class="text-xs text-slate-500">Any medication entered here permanently joins the formulary database and becomes available in the multi-select assignment tool.</p>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Medication Name (Brand / Generic) *</label>
+          <input type="text" id="newmed-name" placeholder="e.g., Metformin (Glucophage)" class="w-full border rounded p-2 focus:ring-1 focus:ring-purple-500">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Drug Classification / System</label>
+          <input type="text" id="newmed-class" placeholder="e.g., Antidiabetic / Biguanide" class="w-full border rounded p-2">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Standard Strength & Route</label>
+          <input type="text" id="newmed-dose" placeholder="e.g., 500 mg PO (Oral)" class="w-full border rounded p-2">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Expected Common Side Effects</label>
+          <input type="text" id="newmed-side-effects" placeholder="e.g., Mild nausea, diarrhea, stomach upset" class="w-full border rounded p-2">
+        </div>
+        <div>
+          <label class="block font-bold text-red-700 mb-1">Critical Red-Flag Symptoms & Immediate Protocol</label>
+          <textarea id="newmed-red-flags" rows="2" placeholder="e.g., Lactic acidosis, extreme weakness. In severe toxicity call 911." class="w-full border border-red-200 rounded p-2 bg-red-50/30"></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button onclick="closeNewMedModal()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-semibold">Cancel</button>
+        <button onclick="saveNewMedicationToDatabase()" class="px-4 py-1.5 bg-purple-700 hover:bg-purple-800 text-white rounded text-xs font-semibold">Save into Database</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- MODAL: PRINTABLE MED LOG SHEET PREVIEW                  -->
+  <!-- ======================================================= -->
+  <div id="printable-med-sheet-modal" class="hidden fixed inset-0 z-50 bg-slate-900/70 overflow-y-auto p-4 md:p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-2xl border border-slate-300 overflow-hidden text-black font-sans leading-tight">
+      <div class="no-print bg-slate-900 text-white px-6 py-3 flex justify-between items-center border-b border-slate-700">
+        <div class="flex items-center gap-2 text-sm font-semibold text-emerald-400">
+          <i class="fa-solid fa-file-medical"></i> Official Medication Log Sheet Generated
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="printOnlyThisModal('printable-med-sheet-modal')" class="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded text-xs shadow flex items-center gap-1">
+            <i class="fa-solid fa-print"></i> Print Med Log Sheet
+          </button>
+          <button onclick="closeMedSheetModal()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-semibold">
+            Close
+          </button>
+        </div>
+      </div>
+
+      <div class="p-8 text-slate-900 bg-white" id="med-sheet-print-content">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- MODAL: EXACT OFFICIAL FORM 1.H.10 DOCUMENT GENERATOR    -->
+  <!-- ======================================================= -->
+  <div id="printable-cir-modal" class="hidden fixed inset-0 z-50 bg-slate-900/70 overflow-y-auto p-4 md:p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-2xl border border-slate-300 overflow-hidden text-black font-sans leading-tight">
+      <div class="no-print bg-slate-800 text-white px-6 py-3 flex justify-between items-center border-b border-slate-700">
+        <div class="flex items-center gap-2 text-sm font-semibold text-amber-400">
+          <i class="fa-solid fa-file-circle-check"></i> Official Form 1.H.10 Document Generated
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="printOnlyThisModal('printable-cir-modal')" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded text-xs shadow flex items-center gap-1">
+            <i class="fa-solid fa-print"></i> Print Official Form 1.H.10
+          </button>
+          <button onclick="closeCIRModal()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-semibold">
+            Close
+          </button>
+        </div>
+      </div>
+
+      <div class="cir-print-page p-6 text-slate-900 bg-white">
+        <div class="flex justify-between items-center border-b-2 border-black pb-3 mb-2">
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 border-2 border-black flex flex-col justify-center items-center font-black text-xs leading-none">
+              <span>★</span>
+              <span>NF</span>
+            </div>
+            <div>
+              <h1 class="text-2xl font-black tracking-wider text-slate-900">NATION'S FINEST</h1>
+              <p class="text-[10px] uppercase font-bold tracking-widest text-slate-700">Veterans & Family Supportive Services</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <h2 class="text-xl font-bold tracking-tight text-slate-900">Critical Incident Report</h2>
+            <div class="text-[11px] font-semibold text-slate-600">Form 1.H.10 (Rev. 3/20/25)</div>
+          </div>
+        </div>
+
+        <table class="w-full cir-table mb-2">
+          <tr>
+            <td class="font-bold w-1/4 bg-slate-100">Date of Incident:</td>
+            <td id="p_date_incident" class="w-1/4 font-mono font-medium"></td>
+            <td class="font-bold w-1/4 bg-slate-100">Time of Incident:</td>
+            <td id="p_time_incident" class="w-1/4 font-mono font-medium"></td>
+          </tr>
+          <tr>
+            <td class="font-bold bg-slate-100">Date of Discovery:</td>
+            <td id="p_date_discovery" class="font-mono font-medium"></td>
+            <td class="font-bold bg-slate-100">Time of Discovery:</td>
+            <td id="p_time_discovery" class="font-mono font-medium"></td>
+          </tr>
+          <tr>
+            <td class="font-bold bg-slate-100">Person Reporting Incident:</td>
+            <td id="p_person_reporting" colspan="1" class="font-semibold"></td>
+            <td class="font-bold bg-slate-100">Person(s) Notified:</td>
+            <td id="p_persons_notified" colspan="1"></td>
+          </tr>
+          <tr>
+            <td class="font-bold bg-slate-100">Site Reporting Incident:</td>
+            <td id="p_site_reporting"></td>
+            <td class="font-bold bg-slate-100">Program Reporting:</td>
+            <td id="p_program_reporting"></td>
+          </tr>
+          <tr>
+            <td class="font-bold bg-slate-100">Location of Incident:</td>
+            <td id="p_location" colspan="3" class="font-semibold"></td>
+          </tr>
+        </table>
+
+        <div class="border border-black p-2 mb-2">
+          <div class="font-bold text-xs uppercase bg-slate-200 px-1 py-0.5 border border-black mb-1">
+            I. Type of Incident (Check all that apply)
+          </div>
+          <div class="grid grid-cols-2 gap-x-4 text-[10px] leading-tight" id="p_incident_types_box"></div>
+          <div class="mt-1 pt-1 border-t border-slate-300 text-[10px] font-semibold" id="p_other_notified_line"></div>
+        </div>
+
+        <div class="mb-2">
+          <div class="font-bold text-[11px] bg-slate-200 px-1 py-0.5 border border-black border-b-0">
+            Client / Staff Involved:
+          </div>
+          <table class="w-full cir-table">
+            <thead>
+              <tr class="bg-slate-100 text-[10px]">
+                <th class="w-1/3">Client / Staff Name</th>
+                <th class="text-center">Client</th>
+                <th class="text-center">Family</th>
+                <th class="text-center">Employee</th>
+                <th class="text-center">Visitor</th>
+                <th class="text-center">Other</th>
+              </tr>
+            </thead>
+            <tbody id="p_involved_tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="space-y-1.5 text-xs mb-2">
+          <div class="border border-black p-1.5">
+            <div class="font-bold text-[10px] uppercase text-slate-700">II. Information about person(s) involved:</div>
+            <div id="p_sec_ii" class="text-[11px] min-h-[22px] whitespace-pre-wrap font-sans"></div>
+          </div>
+          <div class="border border-black p-1.5">
+            <div class="font-bold text-[10px] uppercase text-slate-700">III. Description of Incident (Use Addendum sheet if necessary):</div>
+            <div id="p_sec_iii" class="text-[11px] min-h-[48px] whitespace-pre-wrap font-sans"></div>
+          </div>
+          <div class="border border-black p-1.5">
+            <div class="font-bold text-[10px] uppercase text-slate-700">IV. Description of Action Taken at Time of Incident:</div>
+            <div id="p_sec_iv" class="text-[11px] min-h-[38px] whitespace-pre-wrap font-sans"></div>
+          </div>
+          <div class="border border-black p-1.5">
+            <div class="font-bold text-[10px] uppercase text-slate-700">V. Follow Up Plans/Recommendations:</div>
+            <div id="p_sec_v" class="text-[11px] min-h-[26px] whitespace-pre-wrap font-sans"></div>
+          </div>
+          <div class="border border-black p-1.5">
+            <div class="font-bold text-[10px] uppercase text-slate-700">VI. List All Persons Present at Time of Incident:</div>
+            <div id="p_sec_vi" class="text-[11px] min-h-[20px] font-sans"></div>
+          </div>
+        </div>
+
+        <table class="w-full cir-table mb-1">
+          <thead>
+            <tr class="bg-slate-100 font-bold text-[10px]">
+              <th class="w-1/2">Signatures</th>
+              <th class="w-1/2">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Person Reporting Incident: <span id="p_sig_reporting" class="font-semibold underline ml-1"></span></td>
+              <td id="p_sig_date_reporting" class="font-mono"></td>
+            </tr>
+            <tr>
+              <td>Site Director: <span id="p_sig_director" class="italic text-slate-600 ml-1">Pending Approval</span></td>
+              <td id="p_sig_date_director" class="font-mono text-slate-500">Pending</td>
+            </tr>
+            <tr>
+              <td>Chief Operations Officer: <span id="p_sig_coo" class="italic text-slate-600 ml-1">Pending Approval</span></td>
+              <td id="p_sig_date_coo" class="font-mono text-slate-500">Pending</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="border border-black p-1 text-[10px] flex justify-between items-center mb-1 bg-slate-50">
+          <div>
+            <span class="font-bold mr-2">MUI:</span>
+            <span>Yes <span id="p_mui_yes" class="border border-black px-1 font-mono font-bold"></span></span>
+            <span class="ml-3">No <span id="p_mui_no" class="border border-black px-1 font-mono font-bold">X</span></span>
+          </div>
+          <div>
+            <span class="font-bold">Comments:</span> <span id="p_mui_comments" class="italic">None</span>
+          </div>
+        </div>
+
+        <div class="text-[9px] text-center italic text-slate-700 font-medium">
+          Please submit completed Critical Incident Report with a Supervisor’s signature to the Administration Manager or designee within 24 HOURS of the date of discovery.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- MODAL: MASTER DAILY OPERATIONS PACKET                   -->
+  <!-- ======================================================= -->
+  <div id="printable-master-modal" class="hidden fixed inset-0 z-50 bg-slate-900/80 overflow-y-auto p-4 md:p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-2xl border border-slate-300 overflow-hidden text-black font-sans leading-tight">
+      <div class="no-print bg-slate-900 text-white px-6 py-3 flex justify-between items-center border-b border-slate-700">
+        <div class="flex items-center gap-2 text-sm font-semibold text-amber-400">
+          <i class="fa-solid fa-file-invoice"></i> Master Facility Shift Packet (All 4 Sections Combined)
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="printOnlyThisModal('printable-master-modal')" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded text-xs shadow flex items-center gap-1">
+            <i class="fa-solid fa-print"></i> Print Complete Master Packet
+          </button>
+          <button onclick="closeMasterModal()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-semibold">
+            Close
+          </button>
+        </div>
+      </div>
+
+      <div class="p-8 space-y-6 text-slate-900 bg-white" id="master-packet-content"></div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT STATE & APPLICATION LOGIC -->
+  <script>
+    // 1. NATIONWIDE FACILITY LOCATIONS
+    const facilities = {
+      sacramento: { name: "Southgate Facility", address: "7270 East Southgate Dr, Sacramento, CA 95823", phone: "916-393-8387", defaultBeds: 20 },
+      mather: { name: "Mather Veterans Village", address: "10621 Schirra Ave, Mather, CA 95655", phone: "916-919-8160", defaultBeds: 50 },
+      santarosa: { name: "Santa Rosa HQ & Veterans Center", address: "444 10th St #102, Santa Rosa, CA 95401", phone: "707-860-9722", defaultBeds: 40 },
+      reno: { name: "Reno Plumb Lane Facility", address: "419 W. Plumb Lane, Reno, NV 89509", phone: "775-284-8387", defaultBeds: 35 },
+      carsoncity: { name: "Carson City Veterans Facility", address: "106 E. Adams St #203, Carson City, NV 89706", phone: "775-360-2155", defaultBeds: 25 },
+      flagstaff: { name: "Flagstaff Veterans Facility", address: "1515 E. Cedar Ave #A-5, Flagstaff, AZ 86004", phone: "928-266-1984", defaultBeds: 30 },
+      prescott: { name: "Prescott Facility", address: "600 E. Gurley St #F, Prescott, AZ 86301", phone: "928-776-0766", defaultBeds: 20 },
+      bullhead: { name: "Bullhead City Veterans Center", address: "1343 Hancock Rd, Bullhead City, AZ 86442", phone: "928-444-1135", defaultBeds: 25 },
+      menlopark: { name: "Menlo Park Facility", address: "795 Willow Rd, Bldg 334, Menlo Park, CA 94025", phone: "650-566-0240", defaultBeds: 45 },
+      santacruz: { name: "Santa Cruz Veterans Center", address: "1658 Soquel Dr #B, Santa Cruz, CA 95065", phone: "831-477-7515", defaultBeds: 20 },
+      monterey: { name: "Monterey Veterans Facility", address: "40 Bonifacio Plaza, Monterey, CA 93940", phone: "831-375-1184", defaultBeds: 20 },
+      eureka: { name: "Eureka - Bayview Heights", address: "109 4th St, Eureka, CA 95501", phone: "707-442-4322", defaultBeds: 30 },
+      redding: { name: "Redding Veterans Facility", address: "153 Hartnell Ave #100, Redding, CA 96002", phone: "530-223-3211", defaultBeds: 30 },
+      chico: { name: "Chico Facility", address: "535 Wall St, Chico, CA 95928", phone: "530-809-2831", defaultBeds: 25 },
+      vacaville: { name: "Vacaville Facility", address: "490 Merchant St #201, Vacaville, CA 95688", phone: "916-378-4355", defaultBeds: 20 }
+    };
+
+    let currentFacility = facilities.sacramento;
+    let bedCapacity = 20;
+    let bedStates = {};
+
+    // 2. COMPREHENSIVE CLINICAL FORMULARY FROM GUIDE (69 MEDICATIONS)
+    let formulary = [
+      { name: "Acetaminophen (Tylenol)", category: "Analgesic / Antipyretic", dose: "500 mg PO", sideEffects: "Mild nausea, headache, insomnia, mild stomach upset.", redFlags: "Acute liver failure / hepatotoxicity (jaundice, right upper quadrant pain, severe vomiting), Stevens-Johnson Syndrome." },
+      { name: "Acyclovir / Valacyclovir (Zovirax / Valtrex)", category: "Antiviral", dose: "400 mg PO", sideEffects: "Nausea, vomiting, diarrhea, dizziness, headache.", redFlags: "Acute renal failure (oliguria, flank pain), neurotoxicity (hallucinations, tremors, confusion)." },
+      { name: "Albuterol Inhaler (ProAir / Ventolin)", category: "Short-Acting Beta-2 Agonist", dose: "2 Puffs Inhaled Q4-6H PRN", sideEffects: "Tremors, nervousness, tachycardia, palpitations.", redFlags: "Paradoxical bronchospasm, severe cardiac arrhythmias, chest pain, hypertensive crisis." },
+      { name: "Amlodipine (Norvasc)", category: "Calcium Channel Blocker", dose: "5-10 mg PO QAM", sideEffects: "Peripheral lower-extremity edema, flushing, dizziness, fatigue.", redFlags: "Severe symptomatic hypotension/syncope, cardiogenic shock, worsening angina." },
+      { name: "Amoxicillin / Cephalexin (Amoxil / Keflex)", category: "Beta-Lactam Antibiotics", dose: "500 mg PO TID", sideEffects: "Nausea, vomiting, diarrhea, abdominal cramping, mild rash.", redFlags: "Anaphylaxis (wheezing, stridor, facial angioedema), Clostridioides difficile colitis." },
+      { name: "Antacid (Calcium Carbonate / Aluminum-Magnesium)", category: "Antacid / Neutralizer", dose: "1-2 Chewable Tabs PRN", sideEffects: "Constipation (calcium), diarrhea (magnesium), belching.", redFlags: "Milk-alkali syndrome, severe hypercalcemia, bowel obstruction." },
+      { name: "Anti-Diarrheal (Loperamide / Imodium)", category: "Antimotility Agent", dose: "2 mg PO PRN", sideEffects: "Constipation, dizziness, drowsiness, dry mouth.", redFlags: "Toxic megacolon, paralytic ileus, life-threatening ventricular arrhythmias / Torsades de Pointes." },
+      { name: "Aripiprazole (Abilify)", category: "Second-Gen Antipsychotic", dose: "5-10 mg PO QHS", sideEffects: "Akathisia, insomnia, nausea, tremor.", redFlags: "Neuroleptic Malignant Syndrome (high fever, severe muscle rigidity), Tardive Dyskinesia, acute dystonia." },
+      { name: "Aspirin (81 mg)", category: "Antiplatelet / Salicylate", dose: "81 mg PO QAM", sideEffects: "Dyspepsia, heartburn, mild nausea, easy bruising.", redFlags: "Acute gastrointestinal hemorrhage, salicylate toxicity (tinnitus, confusion), hemorrhagic stroke." },
+      { name: "Atorvastatin / Pravastatin (Lipitor / Pravachol)", category: "HMG-CoA Reductase Inhibitor", dose: "20 mg PO QHS", sideEffects: "Mild myalgia, diarrhea, arthralgia, dyspepsia.", redFlags: "Rhabdomyolysis (extreme muscle breakdown, dark tea-colored urine, acute kidney injury)." },
+      { name: "Azithromycin (Zithromax)", category: "Macrolide Antibiotic", dose: "250-500 mg PO Daily", sideEffects: "Nausea, diarrhea, abdominal pain, mild headache.", redFlags: "QTc interval prolongation and Torsades de Pointes, acute hepatotoxicity." },
+      { name: "B-Complex / Vitamin B / Folic Acid", category: "Water-Soluble Vitamin", dose: "1 Tab PO Daily", sideEffects: "Bright neon-yellow urine discoloration, mild stomach upset.", redFlags: "Peripheral neuropathy (with massive chronic excess of pyridoxine/B6)." },
+      { name: "Baclofen (Lioresal)", category: "Skeletal Muscle Relaxant", dose: "10 mg PO TID", sideEffects: "Drowsiness, sedation, dizziness, weakness, fatigue.", redFlags: "Severe CNS depression / respiratory arrest, acute withdrawal syndrome upon abrupt cessation (seizures)." },
+      { name: "Benzonatate (Tessalon Perles)", category: "Non-Narcotic Antitussive", dose: "100-200 mg PO TID PRN", sideEffects: "Mild drowsiness, dizziness, constipation.", redFlags: "Chewing capsule leading to rapid oropharyngeal numbness, choking, laryngospasm, seizures." },
+      { name: "Benztropine (Cogentin)", category: "Anticholinergic / Antiparkinsonian", dose: "0.5-1 mg PO BID", sideEffects: "Dry mouth, blurred vision, constipation, urinary hesitancy.", redFlags: "Anticholinergic toxicity / delirium, hyperthermia/heat stroke, complete urinary retention." },
+      { name: "Budesonide / Fluticasone Inhalers & Sprays", category: "Corticosteroids", dose: "1-2 Sprays Daily", sideEffects: "Oral candidiasis (thrush), dysphonia (hoarseness), cough.", redFlags: "Paradoxical bronchospasm, acute adrenal insufficiency, immunosuppression." },
+      { name: "Bupropion (Wellbutrin / Zyban)", category: "NDRI Antidepressant", dose: "150-300 mg PO QAM", sideEffects: "Insomnia, dry mouth, agitation, tremor, headache.", redFlags: "Grand mal seizures (dose-dependent), acute psychosis, emergent suicidal ideation." },
+      { name: "Buspirone (Buspar)", category: "Anxiolytic (5-HT1A Agonist)", dose: "10-15 mg PO BID", sideEffects: "Dizziness, drowsiness, lightheadedness, nausea.", redFlags: "Serotonin syndrome when combined with SSRIs/SNRIs (hyperreflexia, clonus, fever)." },
+      { name: "Chlorhexidine Gluconate Oral Rinse", category: "Antimicrobial Oral Rinse", dose: "15 mL Swish & Spit BID", sideEffects: "Tooth/tongue staining, altered taste, calculus formation.", redFlags: "Severe allergic reactions (angioedema, anaphylaxis); do not swallow." },
+      { name: "Cholecalciferol (Vitamin D3)", category: "Fat-Soluble Vitamin", dose: "1000-2000 IU PO Daily", sideEffects: "Rare at physiological doses.", redFlags: "Vitamin D toxicity / severe hypercalcemia (confusion, intractable vomiting, polyuria)." },
+      { name: "Ciprofloxacin (Cipro)", category: "Fluoroquinolone Antibiotic", dose: "500 mg PO BID", sideEffects: "Nausea, diarrhea, headache, dizziness.", redFlags: "Black-Box Warnings: Tendon rupture (Achilles), peripheral neuropathy, aortic aneurysm dissection." },
+      { name: "Colestipol (Colestid)", category: "Bile Acid Sequestrant", dose: "1 g PO Daily", sideEffects: "Severe constipation, abdominal pain, bloating, flatulence.", redFlags: "Complete bowel obstruction, fecal impaction, severe malabsorption of other medications." },
+      { name: "Cyanocobalamin (Vitamin B-12)", category: "Hematopoietic Agent", dose: "1000 mcg PO Daily", sideEffects: "Mild diarrhea, itching, transient headache.", redFlags: "Severe hypokalemia and sudden death during initial treatment of severe megaloblastic anemia." },
+      { name: "Cyclobenzaprine (Flexeril)", category: "Centrally Acting Muscle Relaxant", dose: "5-10 mg PO QHS", sideEffects: "Dry mouth, extreme drowsiness, dizziness, blurred vision.", redFlags: "Serotonin syndrome, cardiac arrhythmias, severe tachycardia, CNS depression." },
+      { name: "Diclofenac (Voltaren Topical Gel 1%)", category: "Topical NSAID", dose: "2-4 g Topical to affected joint QID", sideEffects: "Local application site dryness, redness, itching.", redFlags: "Systemic NSAID absorption leading to acute peptic ulcer perforation, GI bleed, renal impairment." },
+      { name: "Divalproex Sodium (Depakote)", category: "Anticonvulsant / Mood Stabilizer", dose: "250-500 mg PO BID", sideEffects: "Nausea, somnolence, dizziness, tremor, weight gain.", redFlags: "Fatal hepatic failure, acute pancreatitis (severe abdominal pain), hyperammonemic encephalopathy." },
+      { name: "Docusate Sodium (Colace)", category: "Stool Softener", dose: "100 mg PO Daily", sideEffects: "Mild cramping, bitter taste, throat irritation.", redFlags: "Severe dehydration, intestinal perforation if given in presence of mechanical bowel obstruction." },
+      { name: "Duloxetine (Cymbalta)", category: "SNRI Antidepressant", dose: "30-60 mg PO QAM", sideEffects: "Nausea, dry mouth, insomnia, dizziness, diaphoresis.", redFlags: "Suicidality warning, Serotonin syndrome, acute liver failure, hypertensive crisis." },
+      { name: "Escitalopram / Sertraline / Fluoxetine (SSRIs)", category: "Selective Serotonin Reuptake Inhibitors", dose: "10-50 mg PO QAM", sideEffects: "Nausea, insomnia, somnolence, fatigue, tremor.", redFlags: "Serotonin syndrome, QTc prolongation, severe hyponatremia (SIADH), emergent suicide ideation." },
+      { name: "Esomeprazole / Omeprazole (Prilosec / Nexium)", category: "Proton Pump Inhibitors (PPIs)", dose: "20-40 mg PO QAM", sideEffects: "Headache, diarrhea, nausea, abdominal pain.", redFlags: "Clostridioides difficile colitis, acute interstitial nephritis, severe hypomagnesemia." },
+      { name: "Gabapentin (Neurontin)", category: "Anticonvulsant / GABA Analog", dose: "300-600 mg PO TID", sideEffects: "Dizziness, somnolence, ataxia, peripheral edema.", redFlags: "FDA Warning: Life-threatening respiratory depression with opioids; withdrawal seizures if halted." },
+      { name: "Guaifenesin (Mucinex)", category: "Expectorant", dose: "400-600 mg PO Q12H", sideEffects: "Nausea, vomiting, dizziness, headache.", redFlags: "Severe allergic anaphylaxis; nephrolithiasis with massive chronic misuse." },
+      { name: "Hydroxyzine (Atarax / Vistaril)", category: "First-Gen Antihistamine / Anxiolytic", dose: "25-50 mg PO QHS PRN", sideEffects: "Dry mouth, heavy sedation, dizziness, urinary retention.", redFlags: "QTc prolongation and Torsades de Pointes, profound respiratory depression with depressants." },
+      { name: "Ibuprofen / Naproxen (Advil / Aleve)", category: "Oral NSAID", dose: "400-600 mg PO TID PRN", sideEffects: "Dyspepsia, heartburn, abdominal pain, nausea.", redFlags: "Upper GI bleeding / gastric perforation, acute kidney injury, fluid retention, cardiovascular thrombosis." },
+      { name: "Lactulose (Enulose)", category: "Osmotic Laxative / Ammonia Detoxicant", dose: "15-30 mL PO Daily", sideEffects: "Abdominal cramping, flatulence, bloating, nausea.", redFlags: "Severe diarrhea, dehydration, severe hypernatremia, hypokalemia." },
+      { name: "Lamotrigine (Lamictal)", category: "Anticonvulsant / Mood Stabilizer", dose: "25-100 mg PO Daily", sideEffects: "Dizziness, headache, diplopia, ataxia, nausea.", redFlags: "Black-Box Warning: Stevens-Johnson Syndrome / Toxic Epidermal Necrolysis (blistering rash)." },
+      { name: "Levothyroxine (Synthroid)", category: "Thyroid Hormone (T4 Replacement)", dose: "50-112 mcg PO QAM (Empty Stomach)", sideEffects: "Palpitations, nervousness, insomnia, tremor, sweating.", redFlags: "Thyrotoxic crisis (fever, cardiac collapse), acute myocardial infarction, arrhythmias." },
+      { name: "Lisinopril (Zestril / Prinivil)", category: "ACE Inhibitor", dose: "10-20 mg PO QAM", sideEffects: "Persistent dry non-productive cough, dizziness, headache.", redFlags: "Life-threatening angioedema (swelling of tongue/glottis), hyperkalemia, acute renal failure." },
+      { name: "Lithium Carbonate (Lithobid)", category: "Mood Stabilizer (Antimanic)", dose: "300-600 mg PO BID", sideEffects: "Fine hand tremor, polyuria, polydipsia, mild nausea, weight gain.", redFlags: "Lithium Toxicity: coarse tremor, ataxia, confusion, dysarthria, seizures, coma." },
+      { name: "Loratadine / Cetirizine (Claritin / Zyrtec)", category: "Second-Gen Antihistamine", dose: "10 mg PO Daily", sideEffects: "Mild drowsiness, dry mouth, headache, fatigue.", redFlags: "Severe anaphylaxis; extreme anticholinergic toxicity in severe overdose." },
+      { name: "Losartan (Cozaar)", category: "Angiotensin II Receptor Blocker (ARB)", dose: "50 mg PO Daily", sideEffects: "Dizziness, nasal congestion, back pain, fatigue.", redFlags: "Severe symptomatic hypotension, angioedema, hyperkalemia, acute renal failure." },
+      { name: "Melatonin", category: "Pineal Hormone / Sleep Aid", dose: "3-5 mg PO QHS", sideEffects: "Daytime grogginess, vivid dreams, transient headache.", redFlags: "Extreme sedation; paradoxical agitation/nightmares." },
+      { name: "Metformin (Glucophage)", category: "Biguanide Antidiabetic", dose: "500-1000 mg PO BID", sideEffects: "Diarrhea, nausea, vomiting, abdominal bloating, metallic taste.", redFlags: "Black-Box Warning: Lactic Acidosis (somnolence, severe muscle pain, hyperventilation)." },
+      { name: "Methadone / Buprenorphine (Suboxone)", category: "Opioid Agonist / Partial Agonist (MAT)", dose: "As Prescribed PO/SL", sideEffects: "Constipation, lightheadedness, somnolence, sweating, nausea.", redFlags: "Fatal respiratory arrest, profound sedation, severe QTc prolongation (Methadone)." },
+      { name: "Methylphenidate (Ritalin / Concerta)", category: "CNS Stimulant (ADHD Agent)", dose: "10-54 mg PO QAM", sideEffects: "Insomnia, decreased appetite, weight loss, nervousness.", redFlags: "Severe cardiovascular emergencies (sudden cardiac death, stroke), acute psychosis." },
+      { name: "Metoprolol / Carvedilol / Atenolol (Beta Blockers)", category: "Beta-1 Adrenergic Receptor Blockers", dose: "25-50 mg PO BID", sideEffects: "Fatigue, dizziness, cold extremities, bradycardia.", redFlags: "Profound symptomatic bradycardia (HR<45), high-grade AV block, acute heart failure exacerbation." },
+      { name: "Mirtazapine (Remeron)", category: "Noradrenergic / Specific Serotonergic", dose: "15-30 mg PO QHS", sideEffects: "Heavy somnolence/sedation, increased appetite, weight gain.", redFlags: "Agranulocytosis (sudden high fever, severe sore throat), severe neutropenia, Serotonin syndrome." },
+      { name: "Naloxone (Narcan Nasal Spray 4mg)", category: "Opioid Antagonist / Emergency Reversal", dose: "4 mg Intranasal (1 Spray in one nostril)", sideEffects: "Acute opioid withdrawal (rhinorrhea, nausea, sweating).", redFlags: "Re-sedation / recurrent respiratory depression (Narcan half-life is shorter than opioids; repeat in 2-3 min)." },
+      { name: "Naltrexone (Vivitrol / Revia)", category: "Opioid Antagonist (AUD/SUD)", dose: "50 mg PO Daily", sideEffects: "Nausea, headache, dizziness, insomnia, anxiety.", redFlags: "Severe hepatocellular injury/hepatotoxicity; fatal opioid overdose if veteran tries to override blockade." },
+      { name: "Nicotine Replacement (Patches / Gum / Lozenges)", category: "Smoking Cessation Aid", dose: "7-21 mg Transdermal / 2-4 mg Gum", sideEffects: "Local skin irritation, vivid dreams, hiccups, dyspepsia.", redFlags: "Severe nicotine toxicity (tachycardia, diaphoresis, dizziness, vomiting, palpitations)." },
+      { name: "Nystatin Oral Suspension", category: "Polyene Antifungal", dose: "5 mL Swish & Swallow QID", sideEffects: "Diarrhea, gastrointestinal distress, nausea, vomiting.", redFlags: "Severe hypersensitivity / angioedema (rare)." },
+      { name: "Olanzapine (Zyprexa)", category: "Second-Gen Antipsychotic", dose: "5-10 mg PO QHS", sideEffects: "Severe somnolence, marked weight gain, increased appetite.", redFlags: "Neuroleptic Malignant Syndrome, Diabetic Ketoacidosis, severe hypotension." },
+      { name: "Ondansetron (Zofran)", category: "5-HT3 Receptor Antagonist (Antiemetic)", dose: "4-8 mg PO/ODT TID PRN", sideEffects: "Headache, constipation, fatigue, transient dizziness.", redFlags: "QTc prolongation and Torsades de Pointes, Serotonin syndrome when combined with SSRIs." },
+      { name: "Oxybutynin (Ditropan)", category: "Antimuscarinic / Antispasmodic", dose: "5 mg PO BID", sideEffects: "Dry mouth, dizziness, constipation, somnolence, blurred vision.", redFlags: "Heat prostration / hyperthermia (suppressed sweating), acute angle-closure glaucoma." },
+      { name: "Paxlovid (Nirmatrelvir / Ritonavir)", category: "SARS-CoV-2 Protease Inhibitor", dose: "300mg/100mg PO BID x 5 days", sideEffects: "Dysgeusia (metallic taste), diarrhea, myalgia.", redFlags: "Life-threatening drug-drug interactions via potent CYP3A inhibition." },
+      { name: "Prazosin (Minipress)", category: "Alpha-1 Adrenergic Blocker (PTSD Nightmares)", dose: "1-5 mg PO QHS", sideEffects: "Dizziness, drowsiness, headache, weakness, palpitations.", redFlags: "'First-dose syncope' (severe orthostatic hypotension/collapse within 30-90 min), priapism." },
+      { name: "Pregabalin (Lyrica)", category: "Gamma-Aminobutyric Acid Analog (Schedule V)", dose: "50-75 mg PO BID", sideEffects: "Dizziness, somnolence, peripheral edema, dry mouth.", redFlags: "Life-threatening angioedema, profound respiratory depression with opioids." },
+      { name: "Propranolol (Inderal)", category: "Non-Selective Beta-Adrenergic Blocker", dose: "10-20 mg PO BID-TID PRN", sideEffects: "Bradycardia, hypotension, cold extremities, fatigue.", redFlags: "Severe bronchospasm / asthma attack, severe bradycardia, masked hypoglycemia symptoms." },
+      { name: "Quetiapine (Seroquel)", category: "Atypical Antipsychotic", dose: "25-100 mg PO QHS", sideEffects: "Profound somnolence, dry mouth, dizziness, weight gain.", redFlags: "Neuroleptic Malignant Syndrome, severe orthostatic syncope, QTc prolongation." },
+      { name: "Risperidone (Risperdal)", category: "Second-Gen Antipsychotic", dose: "1-2 mg PO BID", sideEffects: "Sedation, parkinsonism, akathisia, dizziness.", redFlags: "Neuroleptic Malignant Syndrome, acute dystonic reaction (oculogyric crisis), severe hyperprolactinemia." },
+      { name: "Silver Sulfadiazine (Silvadene)", category: "Topical Sulfonamide Antibacterial", dose: "Apply 1/16 inch layer BID", sideEffects: "Transient burning, itching, rash, localized pain.", redFlags: "Stevens-Johnson Syndrome, acute leukopenia; contraindicated in sulfa allergy." },
+      { name: "Spironolactone (Aldactone)", category: "Potassium-Sparing Diuretic", dose: "25-50 mg PO QAM", sideEffects: "Gynecomastia, dizziness, headache, gastrointestinal upset.", redFlags: "Severe hyperkalemia (K+ >5.5 mEq/L: flaccid paralysis, fatal cardiac arrhythmias)." },
+      { name: "Sulfamethoxazole-Trimethoprim (Bactrim)", category: "Sulfonamide Antibiotic Combo", dose: "1 DS Tab PO BID", sideEffects: "Nausea, vomiting, anorexia, mild rash.", redFlags: "Severe cutaneous hypersensitivity (SJS/TEN), acute liver necrosis, life-threatening hyperkalemia." },
+      { name: "Sumatriptan (Imitrex)", category: "5-HT1B/1D Receptor Agonist (Triptan)", dose: "50-100 mg PO at onset PRN", sideEffects: "Flushing, dizziness, transient tingling, heaviness in chest.", redFlags: "Coronary artery vasospasm / acute myocardial infarction, Serotonin syndrome." },
+      { name: "Tamsulosin (Flomax)", category: "Alpha-1A Adrenergic Antagonist", dose: "0.4 mg PO QPM", sideEffects: "Orthostatic dizziness, headache, asthenia, rhinitis.", redFlags: "Severe symptomatic orthostatic hypotension, syncope, priapism." },
+      { name: "Trazodone (Desyrel)", category: "Serotonin Antagonist & Reuptake Inhibitor", dose: "50-100 mg PO QHS", sideEffects: "Heavy somnolence, dizziness, dry mouth, morning hangover.", redFlags: "Prolonged painful priapism (>2-4 hours), Serotonin syndrome, cardiac arrhythmias." },
+      { name: "Triamcinolone Acetonide (Kenalog 0.1%)", category: "Medium-Potency Topical Corticosteroid", dose: "Apply thin film to affected skin BID", sideEffects: "Local burning, itching, dryness, skin atrophy.", redFlags: "Systemic absorption causing adrenal suppression, secondary fungal infection." },
+      { name: "Venlafaxine (Effexor XR)", category: "Serotonin-Norepinephrine Reuptake Inhibitor", dose: "75-150 mg PO QAM", sideEffects: "Nausea, somnolence, dry mouth, sweating, anorexia.", redFlags: "Sustained clinical hypertension, Serotonin syndrome, acute withdrawal syndrome if missed." },
+      { name: "Zolpidem (Ambien)", category: "Non-Benzodiazepine Sedative-Hypnotic", dose: "5-10 mg PO QHS", sideEffects: "Drowsiness, dizziness, diarrhea, morning grogginess.", redFlags: "Black-Box Warning: Complex sleep behaviors (sleep-driving, sleep-walking), severe respiratory depression." }
+    ];
+
+    // 3. CLIENT ROSTER (INCLUDING ALL VETERANS FROM EXCEL GUIDE)
+    let clients = [
+      { id: 'C01', firstName: 'John', lastName: 'Cadena', name: 'Cadena, John', bed: 'Bed 01', intake: '2026-06-12', allergies: 'Penicillin', doctor: 'Quest A', meds: [
+        { name: 'Aripiprazole (Abilify)', dose: '10 mg PO - 1 Tab Daily', time: '20:00 (Evening)', instructions: 'Mood stability / take with meal' },
+        { name: 'Levothyroxine (Synthroid)', dose: '112 mcg PO - 1 tab once a day', time: '08:00 (Morning)', instructions: 'Take on empty stomach 30 min before food' },
+        { name: 'Cholecalciferol (Vitamin D3)', dose: '2000 IU PO - 1 Tab Daily', time: '08:00 (Morning)', instructions: 'Daily vitamin supplement' }
+      ]},
+      { id: 'C02', firstName: 'Lisa', lastName: 'Carr', name: 'Carr, Lisa', bed: 'Bed 02', intake: '2026-07-04', allergies: 'Sulfa Drugs', doctor: 'Soriano Z / Rathore', meds: [
+        { name: 'Duloxetine (Cymbalta)', dose: '60 mg PO Daily', time: '08:00 (Morning)', instructions: 'Take with water; do not crush or chew' },
+        { name: 'Pregabalin (Lyrica)', dose: '50 mg PO BID', time: '20:00 (Evening)', instructions: 'For nerve pain' },
+        { name: 'Guaifenesin (Mucinex)', dose: '400 mg PO PRN', time: 'PRN (As Needed)', instructions: 'As needed for congestion' },
+        { name: 'Albuterol Inhaler (ProAir / Ventolin)', dose: '90 mcg - 2 puffs PRN', time: 'PRN (As Needed)', instructions: 'As needed for shortness of breath' }
+      ]},
+      { id: 'C03', firstName: 'Joseph', lastName: 'Croissant', name: 'Croissant, Joseph', bed: 'Bed 03', intake: '2026-08-11', allergies: 'NKDA', doctor: 'Pan W. / Muklewicz', meds: [
+        { name: 'Acetaminophen (Tylenol)', dose: '325 mg PO Q6H PRN', time: 'PRN (As Needed)', instructions: 'Max 3000mg/24hr for pain' },
+        { name: 'Diclofenac (Voltaren Topical Gel 1%)', dose: 'Apply 4g to affected knee', time: '20:00 (Evening)', instructions: 'Topical pain relief' },
+        { name: 'Trazodone (Desyrel)', dose: '50 mg PO QHS', time: '22:00 (Bedtime)', instructions: 'Take at bedtime for insomnia' },
+        { name: 'Naloxone (Narcan Nasal Spray 4mg)', dose: '4 mg Intranasal PRN', time: 'PRN (As Needed)', instructions: 'Emergency opioid overdose reversal' }
+      ]},
+      { id: 'C04', firstName: 'Nathaniel', lastName: 'Damien', name: 'Damien, Nathaniel', bed: 'Bed 04', intake: '2026-07-15', allergies: 'NKDA', doctor: 'Quest A', meds: [
+        { name: 'Risperidone (Risperdal)', dose: '2 mg PO Daily', time: '20:00 (Evening)', instructions: 'For psychosis / mood stability' },
+        { name: 'Quetiapine (Seroquel)', dose: '50 mg PO QHS', time: '22:00 (Bedtime)', instructions: 'Bedtime sedation' },
+        { name: 'Propranolol (Inderal)', dose: '20 mg PO BID', time: '08:00 (Morning)', instructions: 'For anxiety & tremor' },
+        { name: 'Benztropine (Cogentin)', dose: '0.5 mg PO PRN', time: 'PRN (As Needed)', instructions: 'As needed for extrapyramidal symptoms' }
+      ]},
+      { id: 'C05', firstName: 'Nicholas', lastName: 'Sylke', name: 'Sylke, Nicholas', bed: 'Bed 05', intake: '2026-05-20', allergies: 'Aspirin', doctor: 'VA Clinic', meds: [
+        { name: 'Gabapentin (Neurontin)', dose: '300 mg PO TID', time: '20:00 (Evening)', instructions: 'Neuropathic pain regimen' },
+        { name: 'Hydroxyzine (Atarax / Vistaril)', dose: '25 mg PO QHS PRN', time: '22:00 (Bedtime)', instructions: 'PRN for severe anxiety & sleep' },
+        { name: 'Duloxetine (Cymbalta)', dose: '30 mg PO Daily', time: '08:00 (Morning)', instructions: 'Daily morning antidepressant' }
+      ]},
+      { id: 'C06', firstName: 'Tyler', lastName: 'Taws', name: 'Taws, Tyler', bed: 'Bed 06', intake: '2026-09-01', allergies: 'Codeine', doctor: 'VA Martinez', meds: [
+        { name: 'Bupropion (Wellbutrin / Zyban)', dose: '150 mg PO Daily', time: '08:00 (Morning)', instructions: 'Take in morning' },
+        { name: 'Buspirone (Buspar)', dose: '10 mg PO BID', time: '20:00 (Evening)', instructions: 'Twice daily anxiety management' },
+        { name: 'Acyclovir / Valacyclovir (Zovirax / Valtrex)', dose: '400 mg PO BID', time: '08:00 (Morning)', instructions: 'Antiviral maintenance' }
+      ]},
+      { id: 'C07', firstName: 'William', lastName: 'Crenshaw', name: 'Crenshaw, William', bed: 'Bed 07', intake: '2026-08-01', allergies: 'NKDA', doctor: 'Sivia M', meds: [
+        { name: 'Amlodipine (Norvasc)', dose: '10 mg PO Daily', time: '08:00 (Morning)', instructions: 'Do not take with grapefruit juice' }
+      ]},
+      { id: 'C08', firstName: 'Angela', lastName: 'Voelkel', name: 'Voelkel, Angela', bed: 'Bed 08', intake: '2026-08-18', allergies: 'NKDA', doctor: 'VA Northern CA', meds: [
+        { name: 'Gabapentin (Neurontin)', dose: '300 mg PO QHS', time: '20:00 (Evening)', instructions: 'Take at bedtime' },
+        { name: 'Cyanocobalamin (Vitamin B-12)', dose: '1000 mcg PO Daily', time: '08:00 (Morning)', instructions: 'Daily vitamin replenishment' }
+      ]}
+    ];
+
+    // 4. INCIDENT LOG ROSTER
+    let incidentRoster = [
+      {
+        id: 'CIR-2026-089',
+        date: '2026-11-01',
+        time: '02:30',
+        discoveryDate: '2026-11-01',
+        discoveryTime: '02:32',
+        personReporting: 'Marcellus Johnson',
+        personsNotified: 'Ronnie Riddle, Site Supervisor on call',
+        site: 'Southgate Facility',
+        program: 'Transitional Supportive Housing',
+        location: 'West Courtyard Walkway',
+        types: ['Falls', 'Serious Medical Emergency (911 calls)'],
+        notifiedServices: ['Notification of Emergency Medical Personnel'],
+        involved: [{ name: 'Sylke, Nicholas', role: 'Client' }],
+        secII: 'Resident has documented diabetic neuropathy and gait instability.',
+        secIII: 'Staff heard a thud during 02:30 safety walkthrough. Resident tripped over courtyard uneven concrete lip while returning from designated smoking area. Complained of right hip and ankle pain.',
+        secIV: 'Staff immediately responded, advised resident not to move, conducted initial vitals check (BP 128/82, alert & oriented x4). Called 911 for EMS evaluation. Paramedics arrived 02:44.',
+        secV: 'Follow-up with primary care case manager regarding physical therapy mobility walker; maintenance to inspect and mark walkway edge.',
+        secVI: 'Marcellus Johnson (ANS), Ronnie Riddle (ANS), Metro Fire Medic Engine 56',
+        mui: 'No',
+        muiComments: '',
+        status: 'Supervisor Review Pending'
+      }
+    ];
+
+    // Multi-select tracking
+    let selectedMedsForAssignment = [];
+
+    // INITIALIZATION
+    document.addEventListener('DOMContentLoaded', () => {
+      updateClock();
+      setInterval(updateClock, 1000);
+      initBedStates(bedCapacity);
+      renderBeds();
+      renderClientSelect();
+      renderClientMAR();
+      renderFormularyUI();
+      renderCIRRoster();
+      initCIRDefaults();
+    });
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('current-live-time').innerText = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+    }
+
+    // LOCATION SWITCHER
+    function changeFacilityLocation() {
+      const selectedKey = document.getElementById('location-selector').value;
+      if (selectedKey === 'custom') {
+        const customName = prompt("Enter Custom Nation's Finest Facility Name:", "Nation's Finest - Regional Facility");
+        const customAddress = prompt("Enter Facility Street Address & City:", "100 Veterans Way, Sacramento, CA");
+        if (customName) {
+          currentFacility = { name: customName, address: customAddress || "Nationwide Network", phone: "1-833-GOT-YOR6", defaultBeds: 25 };
+        } else {
+          document.getElementById('location-selector').value = 'sacramento';
+          currentFacility = facilities.sacramento;
+        }
+      } else {
+        currentFacility = facilities[selectedKey] || facilities.sacramento;
+      }
+
+      document.getElementById('header-facility-name').innerText = currentFacility.name;
+      document.getElementById('header-facility-address').innerText = currentFacility.address;
+      document.getElementById('stat-site-name').innerText = currentFacility.name;
+      document.getElementById('mar-active-facility').innerHTML = `<i class="fa-solid fa-hotel mr-1 text-slate-400"></i>Site: ${currentFacility.name}`;
+      document.getElementById('cir_site_reporting').value = currentFacility.name;
+    }
+
+    // BED CAPACITY (1 - 100)
+    function initBedStates(count) {
+      for (let i = 1; i <= count; i++) {
+        if (!bedStates[i]) {
+          const client = clients.find(c => c.bed === 'Bed ' + (i < 10 ? '0' + i : i));
+          bedStates[i] = client ? 'Occupied' : (i === 19 ? 'On Pass' : (i === 20 ? 'Vacant' : (i <= 18 ? 'Occupied' : 'Vacant')));
+        }
+      }
+    }
+
+    function setBedCapacityPreset(num) {
+      document.getElementById('capacity-input').value = num;
+      updateBedCapacityFromInput();
+    }
+
+    function updateBedCapacityFromInput() {
+      let num = parseInt(document.getElementById('capacity-input').value, 10);
+      if (isNaN(num) || num < 1) num = 1;
+      if (num > 100) num = 100;
+      document.getElementById('capacity-input').value = num;
+      bedCapacity = num;
+
+      initBedStates(bedCapacity);
+      document.getElementById('capacity-badge').innerText = `${bedCapacity} Beds Active`;
+      document.getElementById('nav-bed-count').innerText = bedCapacity;
+      document.getElementById('grid-header-count').innerText = bedCapacity;
+      document.getElementById('stat-total-beds').innerText = bedCapacity;
+      renderBeds();
+    }
+
+    function renderBeds() {
+      const grid = document.getElementById('bed-grid');
+      grid.innerHTML = '';
+
+      let occupiedCount = 0;
+      let passCount = 0;
+      let vacantCount = 0;
+
+      for (let i = 1; i <= bedCapacity; i++) {
+        const bedNum = 'Bed ' + (i < 10 ? '0' + i : i);
+        const status = bedStates[i] || 'Vacant';
+        const client = clients.find(c => c.bed === bedNum);
+
+        if (status === 'Occupied') occupiedCount++;
+        else if (status === 'On Pass' || status === 'Hospital') passCount++;
+        else vacantCount++;
+
+        let badgeColor = status === 'Occupied' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                         (status === 'On Pass' ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                         (status === 'Hospital' ? 'bg-purple-100 text-purple-800 border-purple-300' : 'bg-slate-100 text-slate-600 border-slate-300'));
+
+        const card = document.createElement('div');
+        card.className = "border rounded-lg p-3 bg-white shadow-sm flex flex-col justify-between hover:border-blue-400 transition";
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-black text-slate-800 text-xs">${bedNum}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded border font-semibold ${badgeColor}">${status}</span>
+            </div>
+            <div class="text-xs font-bold text-slate-900 truncate">${client ? client.name : (status === 'Vacant' ? '<span class="text-slate-400 italic">Open Bed</span>' : 'Veteran Resident')}</div>
+            <div class="text-[11px] text-slate-500 truncate">${client ? 'Allergies: ' + client.allergies : currentFacility.name.split(' ')[0] + ' Resident'}</div>
+          </div>
+          <button onclick="cycleBedStatus(${i})" class="mt-2 text-[10px] text-blue-600 hover:text-blue-800 font-semibold text-right">
+            Change Status &rarr;
+          </button>
+        `;
+        grid.appendChild(card);
+      }
+
+      document.getElementById('stat-occupied').innerText = occupiedCount;
+      document.getElementById('stat-pass').innerText = passCount;
+      document.getElementById('stat-vacant').innerText = vacantCount;
+    }
+
+    function cycleBedStatus(bedIndex) {
+      const statuses = ['Occupied', 'On Pass', 'Hospital', 'Vacant'];
+      let current = bedStates[bedIndex] || 'Vacant';
+      let nextIndex = (statuses.indexOf(current) + 1) % statuses.length;
+      bedStates[bedIndex] = statuses[nextIndex];
+      renderBeds();
+    }
+
+    function openNightCountModal() {
+      const occupied = document.getElementById('stat-occupied').innerText;
+      const pass = document.getElementById('stat-pass').innerText;
+      const vacant = document.getElementById('stat-vacant').innerText;
+      const staffSig = prompt(`Certify 02:00 AM Night Headcount for ${currentFacility.name}:\nTotal Capacity: ${bedCapacity}\nOccupied: ${occupied} | Pass/Hospital: ${pass} | Vacant: ${vacant}\n\nEnter your digital initials / signature:`, "Marcellus Johnson");
+      if (staffSig) {
+        alert(`02:00 AM Headcount successfully certified and signed by ${staffSig}. Recorded into shift ledger.`);
+      }
+    }
+
+    // CLIENT REGISTRATION (FIRST & LAST NAME)
+    function openAddClientModal() {
+      document.getElementById('client-firstname').value = '';
+      document.getElementById('client-lastname').value = '';
+      document.getElementById('client-bed').value = 'Bed ' + (clients.length < 9 ? '0' + (clients.length + 1) : (clients.length + 1));
+      document.getElementById('client-intake').value = new Date().toISOString().split('T')[0];
+      document.getElementById('client-allergies').value = 'NKDA';
+      document.getElementById('client-doctor').value = 'VA Northern California';
+      document.getElementById('modal-add-client').classList.remove('hidden');
+    }
+
+    function closeAddClientModal() {
+      document.getElementById('modal-add-client').classList.add('hidden');
+    }
+
+    function saveNewClient() {
+      const first = document.getElementById('client-firstname').value.trim();
+      const last = document.getElementById('client-lastname').value.trim();
+      const bed = document.getElementById('client-bed').value.trim() || 'Bed 01';
+      const intake = document.getElementById('client-intake').value || new Date().toISOString().split('T')[0];
+      const allergies = document.getElementById('client-allergies').value.trim() || 'NKDA';
+      const doctor = document.getElementById('client-doctor').value.trim() || 'VA Primary Care';
+
+      if (!first || !last) {
+        alert("Please enter both First Name and Last Name.");
+        return;
+      }
+
+      const fullName = `${last}, ${first}`;
+      const newClient = {
+        id: 'C' + (clients.length + 1 < 10 ? '0' + (clients.length + 1) : (clients.length + 1)),
+        firstName: first,
+        lastName: last,
+        name: fullName,
+        bed: bed,
+        intake: intake,
+        allergies: allergies,
+        doctor: doctor,
+        meds: []
+      };
+
+      clients.push(newClient);
+      renderClientSelect();
+      document.getElementById('mar-client-select').value = newClient.id;
+      renderClientMAR();
+      renderBeds();
+      closeAddClientModal();
+
+      alert(`Client ${fullName} added successfully to ${bed}! You can now assign medications using the multi-select tool.`);
+    }
+
+    // MULTI-SELECT MEDICATIONS ASSIGNMENT TOOL
+    function openMultiSelectMedModal() {
+      selectedMedsForAssignment = [];
+      document.getElementById('med-search-input').value = '';
+      renderMultiSelectCheckboxes();
+      updateSelectedCounter();
+      document.getElementById('modal-multiselect-med').classList.remove('hidden');
+    }
+
+    function closeMultiSelectModal() {
+      document.getElementById('modal-multiselect-med').classList.add('hidden');
+    }
+
+    function renderMultiSelectCheckboxes() {
+      const container = document.getElementById('multiselect-checkbox-container');
+      const searchTerm = (document.getElementById('med-search-input').value || '').toLowerCase();
+      container.innerHTML = '';
+
+      const filtered = formulary.filter(m => 
+        m.name.toLowerCase().includes(searchTerm) || 
+        m.category.toLowerCase().includes(searchTerm)
+      );
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="p-4 text-center text-slate-400">No medications matching "${searchTerm}". Click "+ New Med into Database" to add it.</div>`;
+        return;
+      }
+
+      filtered.forEach((med, idx) => {
+        const isChecked = selectedMedsForAssignment.includes(med.name);
+        const row = document.createElement('label');
+        row.className = "flex items-start gap-2.5 p-2 rounded hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200";
+        row.innerHTML = `
+          <input type="checkbox" value="${med.name}" onchange="toggleMedCheckbox(this)" ${isChecked ? 'checked' : ''} class="mt-1 rounded text-emerald-600 focus:ring-emerald-500">
+          <div class="flex-1">
+            <div class="font-bold text-slate-900">${med.name}</div>
+            <div class="text-[11px] text-slate-500"><span class="font-semibold text-slate-700">${med.category}</span> &bull; Typical Dose: ${med.dose}</div>
+            <div class="text-[10px] text-amber-700 mt-0.5 truncate max-w-lg"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${med.redFlags}</div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function filterMultiSelectMeds() {
+      renderMultiSelectCheckboxes();
+    }
+
+    function toggleMedCheckbox(cb) {
+      if (cb.checked) {
+        if (!selectedMedsForAssignment.includes(cb.value)) {
+          selectedMedsForAssignment.push(cb.value);
+        }
+      } else {
+        selectedMedsForAssignment = selectedMedsForAssignment.filter(name => name !== cb.value);
+      }
+      updateSelectedCounter();
+    }
+
+    function updateSelectedCounter() {
+      document.getElementById('selected-meds-counter').innerText = `${selectedMedsForAssignment.length} medications selected`;
+    }
+
+    function confirmMultiSelectMeds() {
+      if (selectedMedsForAssignment.length === 0) {
+        alert("Please check at least one medication from the list.");
+        return;
+      }
+
+      const clientId = document.getElementById('mar-client-select').value;
+      const client = clients.find(c => c.id === clientId) || clients[0];
+      const defaultTime = document.getElementById('multi-default-time').value;
+      const defaultNote = document.getElementById('multi-default-note').value.trim() || 'As prescribed / take with water';
+
+      selectedMedsForAssignment.forEach(medName => {
+        const medObj = formulary.find(m => m.name === medName);
+        client.meds.push({
+          name: medName,
+          dose: medObj ? medObj.dose : 'As prescribed',
+          time: defaultTime,
+          instructions: defaultNote
+        });
+      });
+
+      renderClientMAR();
+      closeMultiSelectModal();
+      alert(`Successfully added ${selectedMedsForAssignment.length} medication(s) to ${client.name}'s Med Log!`);
+    }
+
+    // FORMULARY & DATABASE EXPANSION
+    function renderFormularyUI() {
+      const countEl = document.getElementById('formulary-count');
+      const listEl = document.getElementById('formulary-preview-list');
+      countEl.innerText = formulary.length;
+      listEl.innerHTML = '';
+
+      formulary.forEach(med => {
+        const badge = document.createElement('span');
+        badge.className = "px-2 py-0.5 rounded bg-white border border-slate-300 font-medium text-slate-700 shadow-xs";
+        badge.innerText = med.name;
+        listEl.appendChild(badge);
+      });
+    }
+
+    function openNewMedicationModal() {
+      document.getElementById('modal-new-medication').classList.remove('hidden');
+    }
+
+    function closeNewMedModal() {
+      document.getElementById('modal-new-medication').classList.add('hidden');
+    }
+
+    function saveNewMedicationToDatabase() {
+      const name = document.getElementById('newmed-name').value.trim();
+      const category = document.getElementById('newmed-class').value.trim() || 'General Formulary';
+      const dose = document.getElementById('newmed-dose').value.trim() || 'As prescribed';
+      const sideEffects = document.getElementById('newmed-side-effects').value.trim() || 'None documented';
+      const redFlags = document.getElementById('newmed-red-flags').value.trim() || 'Standard observation precautions';
+
+      if (!name) {
+        alert("Please enter a Medication Name.");
+        return;
+      }
+
+      formulary.unshift({ name, category, dose, sideEffects, redFlags });
+      renderFormularyUI();
+      closeNewMedModal();
+
+      document.getElementById('newmed-name').value = '';
+      document.getElementById('newmed-class').value = '';
+      document.getElementById('newmed-dose').value = '';
+      document.getElementById('newmed-side-effects').value = '';
+      document.getElementById('newmed-red-flags').value = '';
+
+      alert(`"${name}" successfully saved into the Formulary Database! It is now selectable in the multi-select assignment tool.`);
+    }
+
+    // MED LOG VIEW RENDERING
+    function renderClientSelect() {
+      const select = document.getElementById('mar-client-select');
+      select.innerHTML = '';
+      clients.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.innerText = `${c.name} (${c.bed})`;
+        select.appendChild(opt);
+      });
+    }
+
+    function renderClientMAR() {
+      const clientId = document.getElementById('mar-client-select').value;
+      const client = clients.find(c => c.id === clientId) || clients[0];
+
+      const summary = document.getElementById('mar-client-summary');
+      summary.innerHTML = `
+        <div><span class="text-slate-500">Client Name:</span> <span class="font-bold text-slate-800">${client.name}</span></div>
+        <div><span class="text-slate-500">Assigned Bed:</span> <span class="font-bold text-slate-800">${client.bed}</span></div>
+        <div><span class="text-slate-500">Intake Date:</span> <span class="font-bold text-slate-800">${client.intake}</span></div>
+        <div><span class="text-slate-500">Documented Allergies:</span> <span class="font-bold text-red-600">${client.allergies}</span></div>
+      `;
+
+      const tbody = document.getElementById('mar-regimen-tbody');
+      tbody.innerHTML = '';
+
+      if (client.meds.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No active medications assigned yet. Click <strong>"Assign Meds to Client"</strong> above to select from the formulary guide.</td></tr>`;
+        return;
+      }
+
+      client.meds.forEach((m, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="p-2 border font-bold text-slate-800">${m.name}</td>
+          <td class="p-2 border">${m.dose} - ${m.instructions}</td>
+          <td class="p-2 border font-semibold text-emerald-700">${m.time}</td>
+          <td class="p-2 border">
+            <select class="border rounded p-1 text-xs">
+              <option>Observed / Taken</option>
+              <option>Self-Administered</option>
+              <option>Refused</option>
+              <option>Not Available</option>
+            </select>
+          </td>
+          <td class="p-2 border"><input type="text" value="MJ" maxlength="4" class="w-12 border rounded text-center font-bold uppercase p-0.5"></td>
+          <td class="p-2 border text-center">
+            <button onclick="dcMed(${idx})" class="text-red-600 hover:text-red-800 font-semibold text-[11px]">DC Order</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function dcMed(idx) {
+      if (confirm('Discontinue this order on the client record?')) {
+        const clientId = document.getElementById('mar-client-select').value;
+        const client = clients.find(c => c.id === clientId);
+        client.meds.splice(idx, 1);
+        renderClientMAR();
+      }
+    }
+
+    // PRINTABLE MED LOG SHEET GENERATOR
+    function generateAndPrintMedSheet() {
+      const clientId = document.getElementById('mar-client-select').value;
+      const client = clients.find(c => c.id === clientId) || clients[0];
+      const container = document.getElementById('med-sheet-print-content');
+      const now = new Date().toLocaleDateString();
+
+      // Collect specific emergency warnings for this client's medications
+      const clientMedWarnings = [];
+      client.meds.forEach(m => {
+        const found = formulary.find(f => f.name.toLowerCase().includes(m.name.split(' ')[0].toLowerCase()));
+        if (found && found.redFlags) {
+          clientMedWarnings.push({ name: found.name, red: found.redFlags });
+        }
+      });
+
+      container.innerHTML = `
+        <div class="border-b-2 border-black pb-3 mb-4 flex justify-between items-center">
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 border-2 border-black flex flex-col justify-center items-center font-black text-xs leading-none">
+              <span>★</span><span>NF</span>
+            </div>
+            <div>
+              <h1 class="text-2xl font-black tracking-wider text-slate-900">NATION'S FINEST</h1>
+              <p class="text-[10px] uppercase font-bold tracking-widest text-slate-700">Client Medication Administration Record (Med Log)</p>
+              <p class="text-xs font-semibold text-slate-800">${currentFacility.name} &bull; ${currentFacility.address}</p>
+            </div>
+          </div>
+          <div class="text-right text-xs">
+            <div class="font-bold text-sm text-slate-900">${client.name}</div>
+            <div>Bed: <span class="font-bold">${client.bed}</span> | Intake: ${client.intake}</div>
+            <div class="text-red-700 font-bold">Allergies: ${client.allergies}</div>
+            <div>Doctor: ${client.doctor || 'VA Clinic'}</div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <h2 class="font-bold text-xs uppercase bg-slate-200 p-1 border border-black mb-1">Prescribed Medication Regimen & Shift Verification</h2>
+          <table class="w-full cir-table text-xs">
+            <thead>
+              <tr class="bg-slate-100 font-bold">
+                <th class="w-1/4">Medication & Strength</th>
+                <th class="w-1/4">Directions / Administration</th>
+                <th class="text-center">Scheduled Hour</th>
+                <th class="text-center">Shift Observation</th>
+                <th class="text-center">Staff Initials</th>
+                <th class="text-center">Date Logged</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${client.meds.length > 0 ? client.meds.map(m => `
+                <tr>
+                  <td class="font-bold">${m.name}</td>
+                  <td>${m.dose} - ${m.instructions}</td>
+                  <td class="text-center font-semibold text-blue-800">${m.time}</td>
+                  <td class="text-center">[ &radic; ] Observed / Taken</td>
+                  <td class="text-center font-bold">MJ</td>
+                  <td class="text-center font-mono">${now}</td>
+                </tr>
+              `).join('') : `<tr><td colspan="6" class="p-3 text-center italic">No active medications prescribed for this client.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+
+        ${clientMedWarnings.length > 0 ? `
+          <div class="border border-red-300 bg-red-50/50 p-2.5 rounded mb-4 text-xs">
+            <div class="font-bold text-red-800 mb-1 flex items-center gap-1.5">
+              <i class="fa-solid fa-triangle-exclamation"></i> Medication Side Effects & Emergency Clinical Alerts (Call 911 for Red-Flags):
+            </div>
+            <ul class="list-disc list-inside space-y-1 text-[11px] text-red-950">
+              ${clientMedWarnings.map(w => `<li><strong>${w.name}:</strong> ${w.red}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+
+        <div class="pt-6 border-t-2 border-black grid grid-cols-2 gap-8 text-xs">
+          <div>
+            <div class="font-bold mb-6">Staff Member Conducting Observation: ___________________________</div>
+            <div>Signature &amp; Printed Name: Marcellus Johnson, Senior Staff</div>
+          </div>
+          <div>
+            <div class="font-bold mb-6">Supervisor / Clinical Review: ___________________________</div>
+            <div>Date of Verification: ${now}</div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('printable-med-sheet-modal').classList.remove('hidden');
+    }
+
+    function closeMedSheetModal() {
+      document.getElementById('printable-med-sheet-modal').classList.add('hidden');
+    }
+
+    // CIR FORM 1.H.10 JAVASCRIPT
+    function initCIRDefaults() {
+      const today = new Date().toISOString().split('T')[0];
+      const nowTime = new Date().toTimeString().slice(0, 5);
+      document.getElementById('cir_date_incident').value = today;
+      document.getElementById('cir_time_incident').value = nowTime;
+      document.getElementById('cir_date_discovery').value = today;
+      document.getElementById('cir_time_discovery').value = nowTime;
+      document.getElementById('cir_site_reporting').value = currentFacility.name;
+    }
+
+    function loadSampleCIR() {
+      document.getElementById('cir_date_incident').value = '2026-11-02';
+      document.getElementById('cir_time_incident').value = '01:15';
+      document.getElementById('cir_date_discovery').value = '2026-11-02';
+      document.getElementById('cir_time_discovery').value = '01:15';
+      document.getElementById('cir_person_reporting').value = 'Marcellus Johnson';
+      document.getElementById('cir_persons_notified').value = 'Ronnie Riddle (ANS Staff), On-Call Supervisor';
+      document.getElementById('cir_site_reporting').value = currentFacility.name;
+      document.getElementById('cir_program_reporting').value = 'Transitional Supportive Housing';
+      document.getElementById('cir_location').value = 'Room 14 / Courtyard Hallway';
+      
+      document.querySelectorAll('input[name="cir_type"]').forEach(cb => cb.checked = false);
+      const typesToCheck = ['Serious Behavioral Concerns/Psychotic Features', 'Welfare Check'];
+      document.querySelectorAll('input[name="cir_type"]').forEach(cb => {
+        if (typesToCheck.includes(cb.value)) cb.checked = true;
+      });
+
+      document.getElementById('notif_ems').checked = false;
+      document.getElementById('notif_le').checked = false;
+      document.getElementById('notif_aps').checked = false;
+
+      document.getElementById('inv_name_0').value = 'Sylke, Nicholas';
+      const rad = document.querySelector('input[name="inv_role_0"][value="Client"]');
+      if (rad) rad.checked = true;
+
+      document.getElementById('cir_sec_ii').value = 'Veteran has history of service-connected insomnia and acute anxiety flare-ups.';
+      document.getElementById('cir_sec_iii').value = 'During 01:15 safety rounds, resident was pacing hallway in heightened agitated state, expressing auditory hallucinations and stating he felt unsafe in his room. ANS staff engaged resident calmly using verbal de-escalation techniques.';
+      document.getElementById('cir_sec_iv').value = 'Provided seated area in quiet consultation space. Offered water and assisted veteran in utilizing grounding techniques. ANS staff verified vitals and remained present until veteran reported feeling centered. Veteran returned safely to bed at 02:00.';
+      document.getElementById('cir_sec_v').value = 'Recommend morning case manager check-in and referral to VA mental health clinician for med review.';
+      document.getElementById('cir_sec_vi').value = 'Marcellus Johnson (ANS), Ronnie Riddle (ANS)';
+    }
+
+    function generateAndPreviewCIR() {
+      const dateInc = document.getElementById('cir_date_incident').value || 'N/A';
+      const timeInc = document.getElementById('cir_time_incident').value || 'N/A';
+      const dateDisc = document.getElementById('cir_date_discovery').value || 'N/A';
+      const timeDisc = document.getElementById('cir_time_discovery').value || 'N/A';
+      const reporting = document.getElementById('cir_person_reporting').value || 'Staff';
+      const notified = document.getElementById('cir_persons_notified').value || 'Supervisor';
+      const site = document.getElementById('cir_site_reporting').value || currentFacility.name;
+      const program = document.getElementById('cir_program_reporting').value || 'Supportive Housing';
+      const location = document.getElementById('cir_location').value || 'Facility Grounds';
+
+      document.getElementById('p_date_incident').innerText = dateInc;
+      document.getElementById('p_time_incident').innerText = timeInc;
+      document.getElementById('p_date_discovery').innerText = dateDisc;
+      document.getElementById('p_time_discovery').innerText = timeDisc;
+      document.getElementById('p_person_reporting').innerText = reporting;
+      document.getElementById('p_persons_notified').innerText = notified;
+      document.getElementById('p_site_reporting').innerText = site;
+      document.getElementById('p_program_reporting').innerText = program;
+      document.getElementById('p_location').innerText = location;
+
+      const allTypes = [
+        'Biohazardous Accident', 'Medication Errors (missing, stolen, etc.)',
+        'Elderly (age 60+)/Dependent Adult (18-60) Abuse or Neglect', 'Physical Restraint',
+        'Child Abuse or Neglect', 'Missing Persons (report filed with PD)',
+        'Client Death', 'Use/Possession of Licit or Illicit Substances',
+        'AWOL', 'Use/Possession of Weapons',
+        'Serious Behavioral Concerns/Psychotic Features', 'Vehicular Accidents',
+        'Serious Medical Emergency (911 calls)', 'Grave Disability (5150 hold)',
+        'Incidents Involving Injury', 'Physical Violence, Aggression or Assault (to Veteran or Staff)',
+        'Hospitalization', 'Sexual Assault or Sexual Harassment',
+        'Natural Disaster (Earthquake, Fire, Flood, etc.)', 'Welfare Check',
+        'Power Outage', 'Fire (Veteran involved)',
+        'Mold', 'Pest Control',
+        'Infection Control (TB, Covid, lice, scabies, not cold/flu)', 'Trespassing',
+        'Suicidal Behaviors/Ideation (talk)', 'Theft',
+        'Homicidal Behaviors/Ideation (talk)', 'Overdose',
+        'Falls', 'Animal Control Issue/Dog Bite'
+      ];
+
+      const selectedTypes = Array.from(document.querySelectorAll('input[name="cir_type"]:checked')).map(cb => cb.value);
+      const otherTypeVal = document.getElementById('cir_type_other').value.trim();
+
+      const typeContainer = document.getElementById('p_incident_types_box');
+      typeContainer.innerHTML = '';
+      allTypes.forEach(t => {
+        const isChecked = selectedTypes.includes(t);
+        const div = document.createElement('div');
+        div.className = "flex items-center gap-1.5 py-0.5 " + (isChecked ? "font-bold text-black" : "text-slate-600");
+        div.innerHTML = `<span>[${isChecked ? 'X' : '&nbsp;'}]</span> <span>${t}</span>`;
+        typeContainer.appendChild(div);
+      });
+
+      if (otherTypeVal) {
+        const div = document.createElement('div');
+        div.className = "col-span-2 font-bold text-black pt-1";
+        div.innerHTML = `<span>[X] Other:</span> <span class="underline">${otherTypeVal}</span>`;
+        typeContainer.appendChild(div);
+      }
+
+      const le = document.getElementById('notif_le').checked;
+      const ems = document.getElementById('notif_ems').checked;
+      const aps = document.getElementById('notif_aps').checked;
+      document.getElementById('p_other_notified_line').innerHTML = `
+        <span class="mr-2">Which of the following were also notified, if any:</span>
+        <span class="mr-3 font-semibold">[${le ? 'X' : '&nbsp;'}] Law Enforcement</span>
+        <span class="mr-3 font-semibold">[${ems ? 'X' : '&nbsp;'}] Emergency Medical Personnel</span>
+        <span class="font-semibold">[${aps ? 'X' : '&nbsp;'}] APS or CPS</span>
+      `;
+
+      const invTbody = document.getElementById('p_involved_tbody');
+      invTbody.innerHTML = '';
+      for (let r = 0; r < 4; r++) {
+        const nameVal = document.getElementById('inv_name_' + r).value.trim();
+        const role = document.querySelector(`input[name="inv_role_${r}"]:checked`)?.value || '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="font-medium">${nameVal || '&nbsp;'}</td>
+          <td class="text-center font-mono font-bold">${role === 'Client' ? 'X' : ''}</td>
+          <td class="text-center font-mono font-bold">${role === 'Family' ? 'X' : ''}</td>
+          <td class="text-center font-mono font-bold">${role === 'Employee' ? 'X' : ''}</td>
+          <td class="text-center font-mono font-bold">${role === 'Visitor' ? 'X' : ''}</td>
+          <td class="text-center font-mono font-bold">${role === 'Other' ? 'X' : ''}</td>
+        `;
+        invTbody.appendChild(tr);
+      }
+
+      document.getElementById('p_sec_ii').innerText = document.getElementById('cir_sec_ii').value || 'None documented.';
+      document.getElementById('p_sec_iii').innerText = document.getElementById('cir_sec_iii').value || 'No narrative provided.';
+      document.getElementById('p_sec_iv').innerText = document.getElementById('cir_sec_iv').value || 'None documented.';
+      document.getElementById('p_sec_v').innerText = document.getElementById('cir_sec_v').value || 'None documented.';
+      document.getElementById('p_sec_vi').innerText = document.getElementById('cir_sec_vi').value || 'None documented.';
+
+      document.getElementById('p_sig_reporting').innerText = document.getElementById('cir_sig_staff').value;
+      document.getElementById('p_sig_date_reporting').innerText = dateDisc;
+
+      const muiVal = document.querySelector('input[name="cir_mui"]:checked')?.value || 'No';
+      document.getElementById('p_mui_yes').innerText = muiVal === 'Yes' ? 'X' : ' ';
+      document.getElementById('p_mui_no').innerText = muiVal === 'No' ? 'X' : ' ';
+      document.getElementById('p_mui_comments').innerText = document.getElementById('cir_mui_comments').value || 'None';
+
+      document.getElementById('printable-cir-modal').classList.remove('hidden');
+    }
+
+    function closeCIRModal() {
+      document.getElementById('printable-cir-modal').classList.add('hidden');
+    }
+
+    function saveCIRToRoster() {
+      const reporting = document.getElementById('cir_person_reporting').value;
+      const dateInc = document.getElementById('cir_date_incident').value;
+      const timeInc = document.getElementById('cir_time_incident').value;
+      const location = document.getElementById('cir_location').value;
+      const selectedTypes = Array.from(document.querySelectorAll('input[name="cir_type"]:checked')).map(cb => cb.value);
+
+      if (!location || selectedTypes.length === 0) {
+        alert('Please specify the Location and check at least one Type of Incident.');
+        return;
+      }
+
+      const newId = 'CIR-2026-' + Math.floor(100 + Math.random() * 900);
+      incidentRoster.unshift({
+        id: newId,
+        date: dateInc,
+        time: timeInc,
+        location: location,
+        types: selectedTypes,
+        status: selectedTypes.includes('Serious Medical Emergency (911 calls)') || selectedTypes.includes('Overdose') ? 'URGENT: Director Escalated' : 'Supervisor Review Pending'
+      });
+
+      renderCIRRoster();
+      alert(`Report ${newId} submitted and routed successfully! You can view or print the official Form 1.H.10.`);
+    }
+
+    function renderCIRRoster() {
+      const tbody = document.getElementById('cir-roster-tbody');
+      tbody.innerHTML = '';
+      incidentRoster.forEach(inc => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50";
+        const isUrgent = inc.status.includes('URGENT');
+        tr.innerHTML = `
+          <td class="p-2 border font-bold text-slate-800">${inc.id}</td>
+          <td class="p-2 border">${inc.date} ${inc.time}</td>
+          <td class="p-2 border">${inc.location}</td>
+          <td class="p-2 border"><span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-800">${inc.types[0] || 'Incident'}</span></td>
+          <td class="p-2 border"><span class="px-2 py-0.5 rounded text-[11px] font-bold ${isUrgent ? 'bg-red-100 text-red-700 border border-red-300' : 'bg-amber-100 text-amber-800 border border-amber-300'}">${inc.status}</span></td>
+          <td class="p-2 border text-center">
+            <button onclick="generateAndPreviewCIR()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-900 text-amber-300 rounded text-[11px] font-semibold">
+              <i class="fa-solid fa-file-pdf mr-1"></i> Form 1.H.10
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // EXPORT & REPORTING LOGIC
+    function exportSingleSection(sectionKey) {
+      if (sectionKey === 'bed-board') {
+        switchTab('bed-board');
+        setTimeout(() => window.print(), 300);
+      } else if (sectionKey === 'shift-report') {
+        switchTab('shift-report');
+        setTimeout(() => window.print(), 300);
+      }
+    }
+
+    function exportMasterOperationsPacket() {
+      const container = document.getElementById('master-packet-content');
+      const now = new Date().toLocaleString();
+      const occupied = document.getElementById('stat-occupied').innerText;
+      const pass = document.getElementById('stat-pass').innerText;
+      const vacant = document.getElementById('stat-vacant').innerText;
+      const staffDuty = document.getElementById('shift-staff-duty').value;
+      const staffRelief = document.getElementById('shift-staff-relief').value || 'Unassigned';
+      const obs = document.getElementById('shift-observations').value || 'Facility quiet, all doors secure.';
+      const notes = document.getElementById('shift-handover-notes').value || 'Standard handover routines in progress.';
+
+      container.innerHTML = `
+        <div class="border-b-2 border-slate-900 pb-4 mb-4 flex justify-between items-center">
+          <div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-900">NATION'S FINEST</h1>
+            <p class="text-xs uppercase font-bold tracking-widest text-slate-600">Master Operations Daily Shift Packet</p>
+            <p class="text-xs font-semibold text-slate-800 mt-1">${currentFacility.name} — ${currentFacility.address}</p>
+          </div>
+          <div class="text-right text-xs">
+            <div class="font-bold text-slate-900">Shift Window: 12:00 AM - 08:00 AM</div>
+            <div class="text-slate-500">Generated: ${now}</div>
+            <div class="text-slate-700 font-semibold mt-1">Staff: ${staffDuty}</div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <h2 class="font-bold text-sm uppercase bg-slate-100 p-1.5 border border-slate-300 text-slate-800">1. Facility Bed Roster & Certified Count</h2>
+          <div class="p-2 border border-slate-300 border-t-0 text-xs grid grid-cols-4 gap-2 text-center">
+            <div><span class="font-bold">Total Capacity:</span> ${bedCapacity} Beds</div>
+            <div><span class="font-bold text-blue-700">Occupied Onsite:</span> ${occupied}</div>
+            <div><span class="font-bold text-amber-600">Pass / Hospital:</span> ${pass}</div>
+            <div><span class="font-bold text-slate-600">Vacant Intake:</span> ${vacant}</div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <h2 class="font-bold text-sm uppercase bg-slate-100 p-1.5 border border-slate-300 text-slate-800">2. Night Shift Operations & Handover</h2>
+          <div class="p-3 border border-slate-300 border-t-0 text-xs space-y-2">
+            <div><span class="font-bold">Safety Rounds (01:00 AM - 07:00 AM):</span> All 7 hourly physical walkthrough rounds completed and verified.</div>
+            <div><span class="font-bold">Facility / Security Observations:</span> ${obs}</div>
+            <div><span class="font-bold">Incoming Relief Staff:</span> ${staffRelief}</div>
+            <div><span class="font-bold">Morning Instructions:</span> ${notes}</div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <h2 class="font-bold text-sm uppercase bg-slate-100 p-1.5 border border-slate-300 text-slate-800">3. Shift Incident Summary & Routing (Form 1.H.10 Log)</h2>
+          <div class="p-2 border border-slate-300 border-t-0 text-xs">
+            ${incidentRoster.length > 0 ? `
+              <table class="w-full text-left">
+                <thead><tr class="border-b font-bold"><th>ID</th><th>Time</th><th>Location</th><th>Primary Classification</th><th>Routing</th></tr></thead>
+                <tbody>
+                  ${incidentRoster.map(inc => `<tr><td class="font-mono font-bold">${inc.id}</td><td>${inc.date} ${inc.time}</td><td>${inc.location}</td><td>${inc.types[0] || 'General'}</td><td class="font-semibold">${inc.status}</td></tr>`).join('')}
+                </tbody>
+              </table>
+            ` : '<div>No critical incidents occurred during this shift window.</div>'}
+          </div>
+        </div>
+
+        <div class="pt-4 border-t-2 border-slate-400 grid grid-cols-2 gap-8 text-xs">
+          <div>
+            <div class="font-bold mb-6">Awake Night Staff Signature: ___________________________</div>
+            <div>Name: ${staffDuty.split(',')[0]} &nbsp;&nbsp;|&nbsp;&nbsp; Date: ${new Date().toLocaleDateString()}</div>
+          </div>
+          <div>
+            <div class="font-bold mb-6">Incoming Supervisor / Relief Signature: ___________________________</div>
+            <div>Name: ${staffRelief} &nbsp;&nbsp;|&nbsp;&nbsp; Date: ${new Date().toLocaleDateString()}</div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('printable-master-modal').classList.remove('hidden');
+    }
+
+    function closeMasterModal() {
+      document.getElementById('printable-master-modal').classList.add('hidden');
+    }
+
+    function printOnlyThisModal(modalId) {
+      const modal = document.getElementById(modalId);
+      modal.classList.add('print-target');
+      window.print();
+      setTimeout(() => {
+        modal.classList.remove('print-target');
+      }, 500);
+    }
+
+    function exportJSONBackup() {
+      const dataPayload = {
+        facility: currentFacility,
+        bedCapacity: bedCapacity,
+        bedStates: bedStates,
+        formularyDatabase: formulary,
+        clientRegimens: clients,
+        incidents: incidentRoster,
+        exportTimestamp: new Date().toISOString()
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataPayload, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `Nations_Finest_${currentFacility.name.replace(/\\s+/g, '_')}_Operations_Backup.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    // TAB CONTROLLER
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('text-blue-700', 'border-blue-600', 'font-semibold');
+        b.classList.add('text-slate-600', 'border-transparent');
+      });
+
+      document.getElementById('view-' + tabId).classList.remove('hidden');
+      const activeBtn = document.getElementById('tab-' + tabId);
+      activeBtn.classList.add('text-blue-700', 'border-blue-600', 'font-semibold');
+      activeBtn.classList.remove('text-slate-600', 'border-transparent');
+    }
+  </script>
+</body>
+</html>
